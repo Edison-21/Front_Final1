@@ -9,9 +9,9 @@
     <div class="content-area">
       <h2 class="page-title">Información Detallada del Aula Asignada</h2>
 
-      <div class="aula-designada-box">
+      <div class="aula-designada-box" *ngIf="miAula">
         <span class="aula-label">Aula Designada:</span>
-        <span class="aula-value">{{ aulaAsignada }}</span>
+        <span class="aula-value">{{ miAula.nombre }}</span>
       </div>
 
       <p class="intro-text">
@@ -93,4 +93,11 @@
     </div>
   </div>
 </div>
+
+
+
+
+
+
+
 

@@ -12,16 +12,20 @@
       <!-- Summary Cards -->
       <div class="summary-cards">
         <div class="summary-card">
-          <div class="card-number">{{ totalAulas }}</div>
-          <div class="card-label">TOTAL AULAS/LABORATORIOS</div>
-        </div>
-        <div class="summary-card">
-          <div class="card-number">{{ totalDocentes }}</div>
-          <div class="card-label">TOTAL DOCENTES REGISTRADOS</div>
-        </div>
-        <div class="summary-card">
           <div class="card-number">{{ totalBienes }}</div>
-          <div class="card-label">TOTAL BIENES (ACTIVOSFIJOS)</div>
+          <div class="card-label">TOTAL BIENES</div>
+        </div>
+        <div class="summary-card">
+          <div class="card-number">{{ totalCategorias }}</div>
+          <div class="card-label">CATEGORÍAS</div>
+        </div>
+        <div class="summary-card">
+          <div class="card-number">{{ bienesDisponibles }}</div>
+          <div class="card-label">BIENES DISPONIBLES</div>
+        </div>
+        <div class="summary-card">
+          <div class="card-number">{{ bienesAsignados }}</div>
+          <div class="card-label">BIENES ASIGNADOS</div>
         </div>
       </div>
 
@@ -30,12 +34,15 @@
           <input 
             type="text" 
             class="search-input" 
-            placeholder="BUSCAR POR NOMBRE, CODIGO O DESCRIPCION..."
+            placeholder="BUSCAR POR CÓDIGO, NOMBRE, DESCRIPCIÓN..."
             [(ngModel)]="searchTerm"
             (input)="onSearch()">
         </div>
         <button class="add-button" (click)="openAddModal()">
-          Añadir nuevo elemento
+          Añadir Nuevo Bien
+        </button>
+        <button class="category-button" (click)="openCategoryModal()">
+          Nueva Categoría
         </button>
         <div class="filter-dropdown-wrapper" (click)="$event.stopPropagation()">
           <button class="show-all-button" (click)="toggleFilterDropdown()" type="button">
@@ -61,40 +68,52 @@
         <table class="inventario-table">
           <thead>
             <tr>
-              <th>CÓDIGO/ID</th>
-              <th>NOMBRE/DESCRIPCIÓN</th>
+              <th>CÓDIGO</th>
+              <th>NOMBRE</th>
+              <th>CATEGORÍA</th>
               <th>TIPO</th>
-              <th>UBICACIÓN / ÁREA</th>
+              <th>UBICACIÓN</th>
               <th>ESTADO</th>
+              <th>VALOR</th>
               <th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of filteredItems">
-              <td>{{ item.codigo }}</td>
-              <td>{{ item.nombre }}</td>
-              <td>{{ item.tipo }}</td>
-              <td>{{ item.ubicacion }}</td>
+            <tr *ngFor="let bien of filteredBienes">
+              <td>{{ bien.codigo_bien }}</td>
+              <td>{{ bien.nombre_bien }}</td>
+              <td>{{ getCategoriaNombre(bien.id_categoria) }}</td>
+              <td>{{ bien.tipo_bien }}</td>
+              <td>{{ bien.ubicacion }}</td>
               <td>
-                <span class="status-badge" [class.operativo]="item.estado === 'Operativo'" 
-                      [class.mantenimiento]="item.estado === 'Mantenimiento'"
-                      [class.disponible]="item.estado === 'Disponible'"
-                      [class.asignado]="item.estado === 'Asignado'"
-                      [class.titular]="item.estado === 'Titular'"
-                      [class.asociado]="item.estado === 'Asociado'"
-                      [class.contratado]="item.estado === 'Contratado'">
-                  {{ item.estado }}
+                <span class="status-badge" 
+                      [class.disponible]="bien.estado === 'Disponible'"
+                      [class.asignado]="bien.estado === 'Asignado'"
+                      [class.mantenimiento]="bien.estado === 'En Mantenimiento'"
+                      [class.danado]="bien.estado === 'Dañado'"
+                      [class.baja]="bien.estado === 'Baja'">
+                  {{ bien.estado }}
                 </span>
               </td>
+              <td>${{ bien.valor_compra_inicial | number:'1.2-2' }}</td>
               <td>
-                <button class="action-btn view-btn" (click)="viewDetails(item)" title="Ver detalles">
+                <button class="action-btn view-btn" (click)="viewDetails(bien)" title="Ver detalles">
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                     <path d="M10 4 C6 4 3 6 1 10 C3 14 6 16 10 16 C14 16 17 14 19 10 C17 6 14 4 10 4 Z" 
                           stroke="currentColor" stroke-width="1.5" fill="none"/>
                     <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
                   </svg>
                 </button>
+                <button class="action-btn delete-btn" (click)="deleteBien(bien)" title="Eliminar">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <path d="M5 7 L15 7 M8 7 V6 C8 4.895 8.895 4 10 4 C11.105 4 12 4.895 12 6 V7 M14 7 V16 C14 17.105 13.105 18 12 18 L8 18 C6.895 18 6 17.105 6 16 V7" 
+                          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </td>
+            </tr>
+            <tr *ngIf="filteredBienes.length === 0">
+              <td colspan="8" class="no-data">No hay bienes registrados</td>
             </tr>
           </tbody>
         </table>
@@ -113,43 +132,122 @@
 <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="closeAddModal()">×</button>
-    <h2 class="modal-title">Registro de Nuevo Activo/Persona/Espacio</h2>
+    <h2 class="modal-title">Registro de Nuevo Bien</h2>
     
-    <form class="modal-form" (ngSubmit)="saveItem()">
+    <form class="modal-form" (ngSubmit)="saveBien()">
       <div class="form-fields">
-        <div class="form-field">
-          <label>Código/ID (Ej: INV-001, D050, A-102) *</label>
-          <input type="text" [(ngModel)]="nuevoItem.codigo" name="codigo" placeholder="Ej: INV-001, D050, A-102" required>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Código del Bien *</label>
+            <input type="text" [(ngModel)]="nuevoBien.codigo_bien" name="codigo_bien" placeholder="Ej: INV-001" required>
+          </div>
+          <div class="form-field">
+            <label>Código de Inventario</label>
+            <input type="text" [(ngModel)]="nuevoBien.codigo_inventario" name="codigo_inventario" placeholder="Ej: INV-2024-001">
+          </div>
         </div>
         
-        <div class="form-field">
-          <label>Tipo de Elemento *</label>
-          <select [(ngModel)]="nuevoItem.tipo" name="tipo" required>
-            <option value="Bienes">Bienes (Activos)</option>
-            <option value="Aula">Aulas / Laboratorios</option>
-            <option value="Docente">Docentes</option>
-          </select>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Nombre del Bien *</label>
+            <input type="text" [(ngModel)]="nuevoBien.nombre_bien" name="nombre_bien" placeholder="Nombre descriptivo" required>
+          </div>
+          <div class="form-field">
+            <label>Categoría *</label>
+            <select [(ngModel)]="nuevoBien.id_categoria" name="id_categoria" required>
+              <option value="0">Seleccione una categoría</option>
+              <option *ngFor="let cat of categorias" [value]="cat.id_categoria">{{ cat.nombre }}</option>
+            </select>
+          </div>
         </div>
-        
-        <div class="form-field">
-          <label>Ubicación / Área *</label>
-          <input type="text" [(ngModel)]="nuevoItem.ubicacion" name="ubicacion" required>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Tipo de Bien</label>
+            <input type="text" [(ngModel)]="nuevoBien.tipo_bien" name="tipo_bien" placeholder="Ej: Equipo, Mobiliario">
+          </div>
+          <div class="form-field">
+            <label>Clase de Bien</label>
+            <input type="text" [(ngModel)]="nuevoBien.clase_bien" name="clase_bien" placeholder="Ej: Computadora, Mesa">
+          </div>
         </div>
-        
-        <div class="form-field">
-          <label>Nombre / Descripción Corta *</label>
-          <input type="text" [(ngModel)]="nuevoItem.nombre" name="nombre" required>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Marca</label>
+            <input type="text" [(ngModel)]="nuevoBien.marca" name="marca" placeholder="Marca del bien">
+          </div>
+          <div class="form-field">
+            <label>Modelo</label>
+            <input type="text" [(ngModel)]="nuevoBien.modelo" name="modelo" placeholder="Modelo del bien">
+          </div>
         </div>
-        
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Ubicación *</label>
+            <input type="text" [(ngModel)]="nuevoBien.ubicacion" name="ubicacion" placeholder="Ej: Edificio A, Planta Baja" required>
+          </div>
+          <div class="form-field">
+            <label>Estado *</label>
+            <select [(ngModel)]="nuevoBien.estado" name="estado" required>
+              <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Valor de Compra</label>
+            <input type="number" [(ngModel)]="nuevoBien.valor_compra_inicial" name="valor_compra_inicial" placeholder="0.00" step="0.01">
+          </div>
+          <div class="form-field">
+            <label>Valor con IVA</label>
+            <input type="number" [(ngModel)]="nuevoBien.valor_con_iva" name="valor_con_iva" placeholder="0.00" step="0.01">
+          </div>
+        </div>
+
         <div class="form-field">
-          <label>Estado Actual *</label>
-          <input type="text" [(ngModel)]="nuevoItem.estado" name="estado" placeholder="Ej: Operativo, Asignado, Mantenimiento, Titular, etc." required>
+          <label>Descripción</label>
+          <textarea [(ngModel)]="nuevoBien.descripcion" name="descripcion" rows="3" placeholder="Descripción detallada del bien"></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>Especificaciones</label>
+          <textarea [(ngModel)]="nuevoBien.especificaciones" name="especificaciones" rows="2" placeholder="Especificaciones técnicas"></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>Custodio</label>
+          <input type="text" [(ngModel)]="nuevoBien.custodio" name="custodio" placeholder="Nombre del custodio">
         </div>
       </div>
       
       <div class="modal-actions">
-        <button type="submit" class="btn-save">Guardar Elemento al Inventario</button>
+        <button type="submit" class="btn-save">Guardar Bien</button>
         <button type="button" class="btn-cancel" (click)="closeAddModal()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Categoría -->
+<div class="modal-overlay" *ngIf="showCategoryModal" (click)="closeCategoryModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeCategoryModal()">×</button>
+    <h2 class="modal-title">Nueva Categoría</h2>
+    
+    <form class="modal-form" (ngSubmit)="saveCategoria()">
+      <div class="form-fields">
+        <div class="form-field">
+          <label>Nombre de la Categoría *</label>
+          <input type="text" [(ngModel)]="nuevaCategoria.nombre" name="nombre" placeholder="Ej: Equipos de Cómputo" required>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="submit" class="btn-save">Guardar Categoría</button>
+        <button type="button" class="btn-cancel" (click)="closeCategoryModal()">Cancelar</button>
       </div>
     </form>
   </div>
@@ -159,28 +257,97 @@
 <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
   <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="closeDetailModal()">×</button>
-    <h2 class="modal-title">Detalles del Elemento</h2>
+    <h2 class="modal-title">Detalles del Bien</h2>
     
-    <div class="detail-content" *ngIf="selectedItem">
-      <div class="detail-item">
-        <span class="detail-label">Código/ID:</span>
-        <span class="detail-value">{{ selectedItem.codigo }}</span>
+    <div class="detail-content" *ngIf="selectedBien">
+      <div class="detail-section">
+        <h3 class="detail-section-title">Información General</h3>
+        <div class="detail-item">
+          <span class="detail-label">Código del Bien:</span>
+          <span class="detail-value">{{ selectedBien.codigo_bien }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Código de Inventario:</span>
+          <span class="detail-value">{{ selectedBien.codigo_inventario || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Nombre:</span>
+          <span class="detail-value">{{ selectedBien.nombre_bien }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Categoría:</span>
+          <span class="detail-value">{{ getCategoriaNombre(selectedBien.id_categoria) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Tipo:</span>
+          <span class="detail-value">{{ selectedBien.tipo_bien || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Clase:</span>
+          <span class="detail-value">{{ selectedBien.clase_bien || 'N/A' }}</span>
+        </div>
       </div>
-      <div class="detail-item">
-        <span class="detail-label">Nombre/Descripción:</span>
-        <span class="detail-value">{{ selectedItem.nombre }}</span>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">Especificaciones</h3>
+        <div class="detail-item">
+          <span class="detail-label">Marca:</span>
+          <span class="detail-value">{{ selectedBien.marca || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Modelo:</span>
+          <span class="detail-value">{{ selectedBien.modelo || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Serie:</span>
+          <span class="detail-value">{{ selectedBien.serie || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Especificaciones:</span>
+          <span class="detail-value">{{ selectedBien.especificaciones || 'N/A' }}</span>
+        </div>
       </div>
-      <div class="detail-item">
-        <span class="detail-label">Tipo:</span>
-        <span class="detail-value">{{ selectedItem.tipo }}</span>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">Ubicación y Estado</h3>
+        <div class="detail-item">
+          <span class="detail-label">Ubicación:</span>
+          <span class="detail-value">{{ selectedBien.ubicacion || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Custodio:</span>
+          <span class="detail-value">{{ selectedBien.custodio || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Estado:</span>
+          <span class="detail-value status-badge" 
+                [class.disponible]="selectedBien.estado === 'Disponible'"
+                [class.asignado]="selectedBien.estado === 'Asignado'"
+                [class.mantenimiento]="selectedBien.estado === 'En Mantenimiento'">
+            {{ selectedBien.estado }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Detalle de Estado:</span>
+          <span class="detail-value">{{ selectedBien.detalle_estado || 'N/A' }}</span>
+        </div>
       </div>
-      <div class="detail-item">
-        <span class="detail-label">Ubicación / Área:</span>
-        <span class="detail-value">{{ selectedItem.ubicacion }}</span>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">Valores</h3>
+        <div class="detail-item">
+          <span class="detail-label">Valor de Compra:</span>
+          <span class="detail-value">${{ selectedBien.valor_compra_inicial | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Valor con IVA:</span>
+          <span class="detail-value">${{ selectedBien.valor_con_iva | number:'1.2-2' }}</span>
+        </div>
       </div>
-      <div class="detail-item">
-        <span class="detail-label">Estado:</span>
-        <span class="detail-value">{{ selectedItem.estado }}</span>
+
+      <div class="detail-section" *ngIf="selectedBien.descripcion">
+        <h3 class="detail-section-title">Descripción</h3>
+        <p class="detail-text">{{ selectedBien.descripcion }}</p>
       </div>
     </div>
     

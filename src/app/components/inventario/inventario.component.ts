@@ -1,12 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-
-interface Item {
-  codigo: string;
-  nombre: string;
-  tipo: string;
-  ubicacion: string;
-  estado: string;
-}
+import { Bien } from '../../models/bien.model';
+import { Categoria } from '../../models/categoria.model';
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-inventario',
@@ -15,61 +11,82 @@ interface Item {
   styleUrls: ['./inventario.component.scss']
 })
 export class InventarioComponent implements OnInit {
-  currentUser = 'Ing Edison';
+  currentUser = '';
   searchTerm: string = '';
   showAddModal: boolean = false;
+  showEditModal: boolean = false;
   showDetailModal: boolean = false;
-  selectedItem: Item | null = null;
+  showCategoryModal: boolean = false;
+  selectedBien: Bien | null = null;
+  
+  bienes: Bien[] = [];
+  categorias: Categoria[] = [];
+  filteredBienes: Bien[] = [];
   
   // Estadísticas
-  totalAulas: number = 15;
-  totalDocentes: number = 48;
-  totalBienes: number = 1250;
+  totalBienes: number = 0;
+  totalCategorias: number = 0;
+  bienesDisponibles: number = 0;
+  bienesAsignados: number = 0;
   
-  items: Item[] = [
-    { codigo: 'A-101', nombre: 'Aula Magna (Cap. 100)', tipo: 'Aula', ubicacion: 'Edificio A, Planta Baja', estado: 'Operativo' },
-    { codigo: 'A-205', nombre: 'Laboratorio de Química', tipo: 'Aula', ubicacion: 'Edificio A, Nivel 2', estado: 'Operativo' },
-    { codigo: 'B-301', nombre: 'Aula Regular 301', tipo: 'Aula', ubicacion: 'Edificio B, Nivel 3', estado: 'Mantenimiento' },
-    { codigo: 'D0045', nombre: 'Dr. Javier Ruiz González', tipo: 'Docente', ubicacion: 'Ingeniería de Sistemas', estado: 'Titular' },
-    { codigo: 'D0098', nombre: 'Lic. Ana María Solano', tipo: 'Docente', ubicacion: 'Administración', estado: 'Asociado' },
-    { codigo: 'D0150', nombre: 'MSc. Carlos Varela', tipo: 'Docente', ubicacion: 'Matemáticas', estado: 'Contratado' },
-    { codigo: 'INV-123', nombre: 'Proyector Epson X3', tipo: 'Bienes', ubicacion: 'A-101', estado: 'Asignado' },
-    { codigo: 'INV-456', nombre: 'Silla de Oficina (Rodante)', tipo: 'Bienes', ubicacion: 'Almacén', estado: 'Disponible' }
-  ];
-
-  filteredItems: Item[] = [];
-
-  // Formulario para nuevo elemento
-  nuevoItem: Item = {
-    codigo: '',
-    nombre: '',
-    tipo: 'Bienes',
+  // Formulario para nuevo bien
+  nuevoBien: Partial<Bien> = {
+    codigo_bien: '',
+    codigo_inventario: '',
+    codigo_secap: '',
+    nombre_bien: '',
+    descripcion: '',
+    tipo_bien: '',
+    clase_bien: '',
+    cuenta_tipo_bien: '',
+    marca: '',
+    modelo: '',
+    serie: '',
+    especificaciones: '',
+    estado: 'Disponible',
+    detalle_estado: '',
+    origen: '',
+    provincia: '',
     ubicacion: '',
-    estado: ''
+    custodio: '',
+    valor_compra_inicial: 0,
+    valor_con_iva: 0,
+    observaciones: '',
+    observaciones2: '',
+    id_categoria: 0
   };
 
-  tipos: string[] = ['Bienes', 'Aula', 'Docente'];
-  ubicaciones: string[] = ['Edificio A, Planta Baja', 'Edificio A, Nivel 2', 'Edificio B, Nivel 3', 'Almacén', 'Ingeniería de Sistemas', 'Administración', 'Matemáticas'];
-  estados: string[] = ['Operativo', 'Mantenimiento', 'Disponible', 'Asignado', 'Titular', 'Asociado', 'Contratado'];
-  
+  nuevaCategoria: Categoria = {
+    id_categoria: 0,
+    nombre: ''
+  };
+
   // Filtros
   showFilterDropdown: boolean = false;
   selectedFilter: string = 'Mostrar Todos';
+  estados: string[] = ['Disponible', 'Asignado', 'En Mantenimiento', 'Dañado', 'Baja'];
   filterOptions: string[] = [
     'Mostrar Todos',
-    'Aulas / Laboratorios',
-    'Docentes',
-    'Bienes (Activos)',
-    'Mantenimiento',
-    'Titular',
-    'Asociado',
-    'Contratado',
+    'Disponible',
     'Asignado',
-    'Disponible'
+    'En Mantenimiento',
+    'Dañado',
+    'Baja'
   ];
 
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService
+  ) {}
+
   ngOnInit(): void {
-    this.filteredItems = [...this.items];
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.currentUser = user.nombre;
+    }
+    this.loadCategorias();
+    this.loadBienes();
+    
     // Cerrar dropdown al hacer click fuera
     document.addEventListener('click', (event: any) => {
       if (!event.target.closest('.filter-dropdown-wrapper')) {
@@ -78,38 +95,63 @@ export class InventarioComponent implements OnInit {
     });
   }
 
+  loadCategorias(): void {
+    this.apiService.getCategorias().subscribe({
+      next: (categorias) => {
+        this.categorias = categorias;
+        this.totalCategorias = categorias.length;
+      },
+      error: (error) => {
+        console.error('Error cargando categorías:', error);
+      }
+    });
+  }
+
+  loadBienes(): void {
+    this.apiService.getBienes().subscribe({
+      next: (bienes) => {
+        this.bienes = bienes;
+        this.filteredBienes = [...bienes];
+        this.updateStatistics();
+        this.applyFilters();
+      },
+      error: (error) => {
+        console.error('Error cargando bienes:', error);
+      }
+    });
+  }
+
+  updateStatistics(): void {
+    this.totalBienes = this.bienes.length;
+    this.bienesDisponibles = this.bienes.filter(b => b.estado === 'Disponible').length;
+    this.bienesAsignados = this.bienes.filter(b => b.estado === 'Asignado').length;
+  }
+
   onSearch(): void {
     this.applyFilters();
   }
 
   applyFilters(): void {
-    let filtered = [...this.items];
+    let filtered = [...this.bienes];
 
     // Aplicar búsqueda
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.codigo.toLowerCase().includes(term) ||
-        item.nombre.toLowerCase().includes(term) ||
-        item.tipo.toLowerCase().includes(term) ||
-        item.ubicacion.toLowerCase().includes(term)
+      filtered = filtered.filter(bien =>
+        bien.codigo_bien?.toLowerCase().includes(term) ||
+        bien.codigo_inventario?.toLowerCase().includes(term) ||
+        bien.nombre_bien?.toLowerCase().includes(term) ||
+        bien.descripcion?.toLowerCase().includes(term) ||
+        bien.ubicacion?.toLowerCase().includes(term)
       );
     }
 
-    // Aplicar filtro seleccionado
+    // Aplicar filtro de estado
     if (this.selectedFilter !== 'Mostrar Todos') {
-      if (this.selectedFilter === 'Aulas / Laboratorios') {
-        filtered = filtered.filter(item => item.tipo === 'Aula');
-      } else if (this.selectedFilter === 'Docentes') {
-        filtered = filtered.filter(item => item.tipo === 'Docente');
-      } else if (this.selectedFilter === 'Bienes (Activos)') {
-        filtered = filtered.filter(item => item.tipo === 'Bienes');
-      } else {
-        filtered = filtered.filter(item => item.estado === this.selectedFilter);
-      }
+      filtered = filtered.filter(bien => bien.estado === this.selectedFilter);
     }
 
-    this.filteredItems = filtered;
+    this.filteredBienes = filtered;
   }
 
   selectFilter(filter: string): void {
@@ -123,12 +165,30 @@ export class InventarioComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.nuevoItem = {
-      codigo: '',
-      nombre: '',
-      tipo: 'Bienes',
+    this.nuevoBien = {
+      codigo_bien: '',
+      codigo_inventario: '',
+      codigo_secap: '',
+      nombre_bien: '',
+      descripcion: '',
+      tipo_bien: '',
+      clase_bien: '',
+      cuenta_tipo_bien: '',
+      marca: '',
+      modelo: '',
+      serie: '',
+      especificaciones: '',
+      estado: 'Disponible',
+      detalle_estado: '',
+      origen: '',
+      provincia: '',
       ubicacion: '',
-      estado: ''
+      custodio: '',
+      valor_compra_inicial: 0,
+      valor_con_iva: 0,
+      observaciones: '',
+      observaciones2: '',
+      id_categoria: this.categorias.length > 0 ? this.categorias[0].id_categoria : 0
     };
     this.showAddModal = true;
   }
@@ -137,23 +197,104 @@ export class InventarioComponent implements OnInit {
     this.showAddModal = false;
   }
 
-  saveItem(): void {
-    if (this.nuevoItem.codigo && this.nuevoItem.nombre && 
-        this.nuevoItem.ubicacion && this.nuevoItem.estado) {
-      this.items.push({...this.nuevoItem});
-      this.applyFilters();
-      this.closeAddModal();
+  openCategoryModal(): void {
+    this.nuevaCategoria = { id_categoria: 0, nombre: '' };
+    this.showCategoryModal = true;
+  }
+
+  closeCategoryModal(): void {
+    this.showCategoryModal = false;
+  }
+
+  saveBien(): void {
+    if (this.nuevoBien.nombre_bien && this.nuevoBien.codigo_bien && this.nuevoBien.id_categoria) {
+      const bien: Bien = {
+        id_bien: 0,
+        codigo_bien: this.nuevoBien.codigo_bien || '',
+        codigo_inventario: this.nuevoBien.codigo_inventario || '',
+        codigo_secap: this.nuevoBien.codigo_secap || '',
+        nombre_bien: this.nuevoBien.nombre_bien || '',
+        descripcion: this.nuevoBien.descripcion || '',
+        tipo_bien: this.nuevoBien.tipo_bien || '',
+        clase_bien: this.nuevoBien.clase_bien || '',
+        cuenta_tipo_bien: this.nuevoBien.cuenta_tipo_bien || '',
+        marca: this.nuevoBien.marca || '',
+        modelo: this.nuevoBien.modelo || '',
+        serie: this.nuevoBien.serie || '',
+        especificaciones: this.nuevoBien.especificaciones || '',
+        estado: this.nuevoBien.estado || 'Disponible',
+        detalle_estado: this.nuevoBien.detalle_estado || '',
+        origen: this.nuevoBien.origen || '',
+        provincia: this.nuevoBien.provincia || '',
+        ubicacion: this.nuevoBien.ubicacion || '',
+        custodio: this.nuevoBien.custodio || '',
+        valor_compra_inicial: this.nuevoBien.valor_compra_inicial || 0,
+        valor_con_iva: this.nuevoBien.valor_con_iva || 0,
+        observaciones: this.nuevoBien.observaciones || '',
+        observaciones2: this.nuevoBien.observaciones2 || '',
+        id_categoria: this.nuevoBien.id_categoria || 0
+      };
+
+      this.apiService.createBien(bien).subscribe({
+        next: (bienCreado) => {
+          this.bienes.push(bienCreado);
+          this.updateStatistics();
+          this.applyFilters();
+          this.closeAddModal();
+        },
+        error: (error) => {
+          console.error('Error guardando bien:', error);
+          alert('Error al guardar el bien. Por favor, intente nuevamente.');
+        }
+      });
     }
   }
 
-  viewDetails(item: Item): void {
-    this.selectedItem = item;
+  saveCategoria(): void {
+    if (this.nuevaCategoria.nombre) {
+      this.apiService.createCategoria(this.nuevaCategoria).subscribe({
+        next: (categoria) => {
+          this.categorias.push(categoria);
+          this.totalCategorias = this.categorias.length;
+          this.closeCategoryModal();
+        },
+        error: (error) => {
+          console.error('Error guardando categoría:', error);
+          alert('Error al guardar la categoría. Por favor, intente nuevamente.');
+        }
+      });
+    }
+  }
+
+  viewDetails(bien: Bien): void {
+    this.selectedBien = bien;
     this.showDetailModal = true;
   }
 
   closeDetailModal(): void {
     this.showDetailModal = false;
-    this.selectedItem = null;
+    this.selectedBien = null;
+  }
+
+  getCategoriaNombre(id_categoria: number): string {
+    const categoria = this.categorias.find(c => c.id_categoria === id_categoria);
+    return categoria ? categoria.nombre : 'Sin categoría';
+  }
+
+  deleteBien(bien: Bien): void {
+    if (confirm(`¿Está seguro de eliminar el bien ${bien.nombre_bien}?`)) {
+      this.apiService.deleteBien(bien.id_bien).subscribe({
+        next: () => {
+          this.bienes = this.bienes.filter(b => b.id_bien !== bien.id_bien);
+          this.updateStatistics();
+          this.applyFilters();
+        },
+        error: (error) => {
+          console.error('Error eliminando bien:', error);
+          alert('Error al eliminar el bien. Por favor, intente nuevamente.');
+        }
+      });
+    }
   }
 }
 

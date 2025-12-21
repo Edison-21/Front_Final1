@@ -25,7 +25,7 @@
             <tr *ngFor="let solicitud of filteredSolicitudes">
               <td>
                 <div class="id-estado-cell">
-                  <span class="solicitud-id">#{{ solicitud.id }}</span>
+                  <span class="solicitud-id">#{{ solicitud.id_solicitud }}</span>
                   <span class="estado-badge" 
                         [class.pendiente]="solicitud.estado === 'Pendiente'"
                         [class.aceptada]="solicitud.estado === 'Aceptada'"
@@ -37,19 +37,22 @@
               </td>
               <td>
                 <div class="docente-aula-cell">
-                  <div class="docente">{{ solicitud.docente }}</div>
-                  <div class="aula">{{ solicitud.aula }}</div>
+                  <div class="docente">Bien ID: {{ solicitud.id_bien }}</div>
+                  <div class="aula" *ngIf="solicitud.bien">{{ solicitud.bien.nombre_bien }}</div>
                 </div>
               </td>
-              <td>{{ solicitud.tipo }}</td>
-              <td class="descripcion-cell">{{ solicitud.descripcion }}</td>
-              <td>{{ solicitud.fecha }}</td>
+              <td>{{ solicitud.estado }}</td>
+              <td class="descripcion-cell">{{ solicitud.bien?.descripcion || 'N/A' }}</td>
+              <td>-</td>
               <td>
                 <div class="acciones-cell">
-                  <button class="btn-aceptar" (click)="aceptarDesdeTabla(solicitud)">Aceptar</button>
-                  <button class="btn-rechazar" (click)="rechazarDesdeTabla(solicitud)">Rechazar</button>
+                  <button class="btn-aceptar" (click)="aceptarDesdeTabla(solicitud)" *ngIf="solicitud.estado === 'Pendiente'">Aceptar</button>
+                  <button class="btn-rechazar" (click)="rechazarDesdeTabla(solicitud)" *ngIf="solicitud.estado === 'Pendiente'">Rechazar</button>
                 </div>
               </td>
+            </tr>
+            <tr *ngIf="filteredSolicitudes.length === 0">
+              <td colspan="6" class="no-data">No hay solicitudes registradas</td>
             </tr>
           </tbody>
         </table>
@@ -85,28 +88,28 @@
 <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
   <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="closeDetailModal()">×</button>
-    <h2 class="modal-title">Solicitud #{{ selectedSolicitud?.id }}</h2>
+    <h2 class="modal-title">Solicitud #{{ selectedSolicitud?.id_solicitud }}</h2>
     
     <div class="detail-content" *ngIf="selectedSolicitud">
       <div class="detail-row">
-        <span class="detail-label">Docente:</span>
-        <span class="detail-value">{{ selectedSolicitud.docente }}</span>
+        <span class="detail-label">Bien:</span>
+        <span class="detail-value">{{ selectedSolicitud.bien?.nombre_bien || 'N/A' }}</span>
       </div>
       
       <div class="detail-row">
-        <span class="detail-label">Aula:</span>
-        <span class="detail-value">{{ selectedSolicitud.aula }}</span>
+        <span class="detail-label">Ubicación:</span>
+        <span class="detail-value">{{ selectedSolicitud.bien?.ubicacion || 'N/A' }}</span>
       </div>
       
       <div class="detail-row">
-        <span class="detail-label">Tipo:</span>
-        <span class="detail-value">{{ selectedSolicitud.tipo }}</span>
+        <span class="detail-label">Estado:</span>
+        <span class="detail-value">{{ selectedSolicitud.estado }}</span>
       </div>
       
       <div class="detail-row full-width">
-        <span class="detail-label">Detalle de la Solicitud:</span>
+        <span class="detail-label">Descripción del Bien:</span>
         <div class="detalle-text-area">
-          {{ selectedSolicitud.descripcion }}
+          {{ selectedSolicitud.bien?.descripcion || 'N/A' }}
         </div>
       </div>
     </div>

@@ -1,14 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-
-interface Solicitud {
-  id: number;
-  estado: string;
-  docente: string;
-  aula: string;
-  tipo: string;
-  descripcion: string;
-  fecha: string;
-}
+import { Solicitud } from '../../models/solicitud.model';
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-solicitudes-cambio',
@@ -17,7 +10,7 @@ interface Solicitud {
   styleUrls: ['./solicitudes-cambio.component.scss']
 })
 export class SolicitudesCambioComponent implements OnInit {
-  currentUser = 'Ing Edison';
+  currentUser = '';
   showDetailModal: boolean = false;
   selectedSolicitud: Solicitud | null = null;
   showConfirmModal: boolean = false;
@@ -25,49 +18,32 @@ export class SolicitudesCambioComponent implements OnInit {
   confirmAction: 'aceptar' | 'rechazar' | null = null;
   solicitudToProcess: Solicitud | null = null;
 
-  solicitudes: Solicitud[] = [
-    {
-      id: 101,
-      estado: 'Pendiente',
-      docente: 'Prof. Alejandra Soto',
-      aula: 'AULA-105',
-      tipo: 'Recursos Físicos',
-      descripcion: 'Solicita 5 sillas y 1 mesa adicionales para un proyecto de grupo (Temporal).',
-      fecha: '25/11/2025'
-    },
-    {
-      id: 102,
-      estado: 'Pendiente',
-      docente: 'Prof. Javier Reyes',
-      aula: 'LAB-301',
-      tipo: 'Configuración',
-      descripcion: 'Pide cambiar el estado a \'Laboratorio\' y añadir 20 computadoras.',
-      fecha: '26/11/2025'
-    },
-    {
-      id: 103,
-      estado: 'Pendiente',
-      docente: 'Prof. Elena Castro',
-      aula: 'AULA-202',
-      tipo: 'Recursos Físicos',
-      descripcion: 'Solicita la remoción de 2 mesas para liberar espacio para actividades.',
-      fecha: '26/11/2025'
-    },
-    {
-      id: 104,
-      estado: 'Pendiente',
-      docente: 'Prof. Ana Torres',
-      aula: 'AULA-101',
-      tipo: 'Recursos Físicos',
-      descripcion: 'Pide 3 pizarras blancas de mano.',
-      fecha: '27/11/2025'
-    }
-  ];
-
+  solicitudes: Solicitud[] = [];
   filteredSolicitudes: Solicitud[] = [];
 
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService
+  ) {}
+
   ngOnInit(): void {
-    this.filteredSolicitudes = [...this.solicitudes];
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.currentUser = user.nombre;
+    }
+    this.loadSolicitudes();
+  }
+
+  loadSolicitudes(): void {
+    this.apiService.getSolicitudes().subscribe({
+      next: (solicitudes) => {
+        this.solicitudes = solicitudes;
+        this.filteredSolicitudes = [...solicitudes];
+      },
+      error: (error) => {
+        console.error('Error cargando solicitudes:', error);
+      }
+    });
   }
 
   viewDetails(solicitud: Solicitud): void {
@@ -84,9 +60,9 @@ export class SolicitudesCambioComponent implements OnInit {
     this.solicitudToProcess = solicitud;
     this.confirmAction = action;
     if (action === 'aceptar') {
-      this.confirmMessage = `¿Está seguro de aceptar la solicitud #${solicitud.id}?`;
+      this.confirmMessage = `¿Está seguro de aceptar la solicitud #${solicitud.id_solicitud}?`;
     } else {
-      this.confirmMessage = `¿Está seguro de rechazar la solicitud #${solicitud.id}?`;
+      this.confirmMessage = `¿Está seguro de rechazar la solicitud #${solicitud.id_solicitud}?`;
     }
     this.showConfirmModal = true;
   }
@@ -101,19 +77,31 @@ export class SolicitudesCambioComponent implements OnInit {
   confirmActionExecute(): void {
     if (!this.solicitudToProcess || !this.confirmAction) return;
 
-    const index = this.solicitudes.findIndex(s => s.id === this.solicitudToProcess!.id);
-    if (index > -1) {
-      if (this.confirmAction === 'aceptar') {
-        this.solicitudes[index].estado = 'Aceptada';
-        this.showSuccessMessage('Solicitud aceptada exitosamente');
-      } else {
-        this.solicitudes[index].estado = 'Rechazada';
-        this.showSuccessMessage('Solicitud rechazada');
+    const solicitudActualizada: Solicitud = {
+      ...this.solicitudToProcess,
+      estado: this.confirmAction === 'aceptar' ? 'Aceptada' : 'Rechazada'
+    };
+
+    this.apiService.updateSolicitud(solicitudActualizada).subscribe({
+      next: (solicitud) => {
+        const index = this.solicitudes.findIndex(s => s.id_solicitud === solicitud.id_solicitud);
+        if (index > -1) {
+          this.solicitudes[index] = solicitud;
+          this.filteredSolicitudes = [...this.solicitudes];
+          this.showSuccessMessage(
+            this.confirmAction === 'aceptar' 
+              ? 'Solicitud aceptada exitosamente' 
+              : 'Solicitud rechazada'
+          );
+        }
+        this.closeDetailModal();
+        this.closeConfirmModal();
+      },
+      error: (error) => {
+        console.error('Error actualizando solicitud:', error);
+        alert('Error al procesar la solicitud. Por favor, intente nuevamente.');
       }
-      this.filteredSolicitudes = [...this.solicitudes];
-      this.closeDetailModal();
-      this.closeConfirmModal();
-    }
+    });
   }
 
   aceptarSolicitud(solicitud: Solicitud): void {

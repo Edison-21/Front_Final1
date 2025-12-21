@@ -43,19 +43,18 @@
 
         <form (ngSubmit)="login()">
           <div class="form-group">
-            <label for="cedula">Cédula *</label>
+            <label for="email">Email *</label>
             <div class="input-wrapper">
               <svg class="input-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="6" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                <path d="M5 18 C5 14 7 12 10 12 C13 12 15 14 15 18" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                <rect x="8" y="10" width="4" height="3" rx="1" fill="currentColor" opacity="0.3"/>
+                <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                <path d="M2 6 L10 11 L18 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <input 
-                type="text" 
-                id="cedula" 
-                name="cedula"
-                [(ngModel)]="cedula"
-                placeholder="Ingrese su cédula"
+                type="email" 
+                id="email" 
+                name="email"
+                [(ngModel)]="email"
+                placeholder="Ingrese su email"
                 required>
             </div>
           </div>
@@ -88,12 +87,30 @@
             </div>
           </div>
 
-          <button type="submit" class="login-button">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <div class="form-group">
+            <label for="role">Rol (Para pruebas) *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="6" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                <path d="M5 18 C5 14 7 12 10 12 C13 12 15 14 15 18" stroke="currentColor" stroke-width="1.5" fill="none"/>
+              </svg>
+              <select id="role" name="role" [(ngModel)]="selectedRole" class="form-select">
+                <option *ngFor="let role of roleOptions" [value]="role.id">{{ role.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <button type="submit" class="login-button" [disabled]="isLoading">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" *ngIf="!isLoading">
               <path d="M8 5 L13 10 L8 15" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M3 10 L13 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
-            Acceder al Sistema
+            <span *ngIf="isLoading">Cargando...</span>
+            <span *ngIf="!isLoading">Acceder al Sistema</span>
           </button>
         </form>
       </div>

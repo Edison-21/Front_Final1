@@ -29,8 +29,9 @@
               [(ngModel)]="aulaSeleccionada"
               class="form-select"
               required>
-              <option *ngFor="let aula of aulas" [value]="aula">
-                {{ aula }}
+              <option value="">Seleccione un aula</option>
+              <option *ngFor="let aula of aulas" [value]="aula.nombre">
+                {{ aula.nombre }} - {{ aula.ubicacion }}
               </option>
             </select>
           </div>
@@ -43,6 +44,7 @@
               [(ngModel)]="tipoSolicitud"
               class="form-select"
               required>
+              <option value="">Seleccione el tipo</option>
               <option *ngFor="let tipo of tiposSolicitud" [value]="tipo">
                 {{ tipo }}
               </option>
@@ -86,19 +88,22 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let solicitud of solicitudes">
-                <td class="aula-cell">{{ solicitud.aula }}</td>
-                <td class="tipo-cell">{{ solicitud.tipo }}</td>
-                <td class="detalle-cell">{{ solicitud.detalle }}</td>
+              <tr *ngFor="let solicitud of misSolicitudes">
+                <td class="aula-cell">{{ solicitud.bien?.ubicacion || 'N/A' }}</td>
+                <td class="tipo-cell">{{ solicitud.estado }}</td>
+                <td class="detalle-cell">{{ solicitud.bien?.descripcion || 'N/A' }}</td>
                 <td>
                   <span class="estado-badge"
                         [class.pendiente]="solicitud.estado === 'Pendiente'"
-                        [class.aprobado]="solicitud.estado === 'Aprobado'"
-                        [class.rechazado]="solicitud.estado === 'Rechazado'">
+                        [class.aceptada]="solicitud.estado === 'Aceptada'"
+                        [class.rechazada]="solicitud.estado === 'Rechazada'">
                     <span class="estado-dot"></span>
                     {{ solicitud.estado }}
                   </span>
                 </td>
+              </tr>
+              <tr *ngIf="misSolicitudes.length === 0">
+                <td colspan="4" class="no-data">No hay solicitudes registradas</td>
               </tr>
             </tbody>
           </table>

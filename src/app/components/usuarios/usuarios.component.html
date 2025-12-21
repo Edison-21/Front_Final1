@@ -34,9 +34,8 @@
         <table class="usuarios-table">
           <thead>
             <tr>
-              <th>Cédula</th>
-              <th>Nombres</th>
-              <th>Apellidos</th>
+              <th>Nombre</th>
+              <th>Email</th>
               <th>Rol</th>
               <th>Fecha Registro</th>
               <th>Estado</th>
@@ -45,23 +44,26 @@
           </thead>
           <tbody>
             <tr *ngFor="let usuario of filteredUsuarios">
-              <td>{{ usuario.cedula }}</td>
-              <td>{{ usuario.nombres }}</td>
-              <td>{{ usuario.apellidos }}</td>
+              <td>{{ usuario.nombre }}</td>
+              <td>{{ usuario.email }}</td>
               <td>
-                <span class="rol-badge" [class.admin]="usuario.rol === 'Admin'" [class.coordinador]="usuario.rol === 'Coordinador'" [class.usuario]="usuario.rol === 'Usuario'">
-                  {{ usuario.rol }}
+                <span class="rol-badge" 
+                      [class.admin]="getRolNombre(usuario.id_rol) === 'Admin'" 
+                      [class.coordinador]="getRolNombre(usuario.id_rol) === 'Coordinador'" 
+                      [class.docente]="getRolNombre(usuario.id_rol) === 'Docente'"
+                      [class.usuario]="getRolNombre(usuario.id_rol) === 'Usuario'">
+                  {{ getRolNombre(usuario.id_rol) }}
                 </span>
               </td>
-              <td>{{ usuario.fechaRegistro }}</td>
+              <td>{{ formatDate(usuario.fecha_registro) }}</td>
               <td>
-                <span class="status-badge" [class.active]="usuario.activo" [class.inactive]="!usuario.activo">
-                  {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                <span class="status-badge" [class.active]="usuario.estado" [class.inactive]="!usuario.estado">
+                  {{ usuario.estado ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
               <td>
                 <div class="action-buttons">
-                  <button class="action-btn block-btn" (click)="toggleEstado(usuario)" [title]="usuario.activo ? 'Desactivar' : 'Activar'">
+                  <button class="action-btn block-btn" (click)="toggleEstado(usuario)" [title]="usuario.estado ? 'Desactivar' : 'Activar'">
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                       <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
                       <line x1="6" y1="6" x2="14" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -74,6 +76,9 @@
                   </button>
                 </div>
               </td>
+            </tr>
+            <tr *ngIf="filteredUsuarios.length === 0">
+              <td colspan="6" class="no-data">No hay usuarios registrados</td>
             </tr>
           </tbody>
         </table>
@@ -89,41 +94,34 @@
     <h2 class="modal-title">Crear Usuario</h2>
     
     <form class="modal-form" (ngSubmit)="saveUsuario()">
-      <div class="form-row">
-        <div class="form-col">
-          <div class="form-field">
-            <label>Cédula *</label>
-            <input type="text" [(ngModel)]="nuevoUsuario.cedula" name="cedula" required>
-          </div>
-          <div class="form-field">
-            <label>Nombres *</label>
-            <input type="text" [(ngModel)]="nuevoUsuario.nombres" name="nombres" required>
-          </div>
-          <div class="form-field">
-            <label>Apellidos *</label>
-            <input type="text" [(ngModel)]="nuevoUsuario.apellidos" name="apellidos" required>
-          </div>
-          <div class="form-field">
-            <label>Contraseña *</label>
-            <input type="password" [(ngModel)]="nuevoUsuario.password" name="password" required>
-          </div>
+      <div class="form-fields">
+        <div class="form-field">
+          <label>Nombre Completo *</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" placeholder="Nombre del usuario" required>
         </div>
-        <div class="form-col">
-          <div class="form-field">
-            <label>Rol *</label>
-            <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
-              <option *ngFor="let rol of roles" [value]="rol">{{ rol }}</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>Fecha de Registro *</label>
-            <input type="date" [(ngModel)]="nuevoUsuario.fechaRegistro" name="fechaRegistro" required>
-          </div>
+        <div class="form-field">
+          <label>Email *</label>
+          <input type="email" [(ngModel)]="nuevoUsuario.email" name="email" placeholder="usuario@ejemplo.com" required>
+        </div>
+        <div class="form-field">
+          <label>Contraseña *</label>
+          <input type="password" [(ngModel)]="passwordTemp" name="password" placeholder="Contraseña segura" required>
+        </div>
+        <div class="form-field">
+          <label>Rol *</label>
+          <select [(ngModel)]="nuevoUsuario.id_rol" name="id_rol" required>
+            <option value="0">Seleccione un rol</option>
+            <option *ngFor="let rol of roles" [value]="rol.id_rol">{{ rol.nombre }}</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Fecha de Registro</label>
+          <input type="date" [(ngModel)]="nuevoUsuario.fecha_registro" name="fecha_registro">
         </div>
       </div>
       
       <div class="modal-actions">
-        <button type="submit" class="btn-save">Guardar</button>
+        <button type="submit" class="btn-save">Guardar Usuario</button>
         <button type="button" class="btn-cancel" (click)="closeAddModal()">Cancelar</button>
       </div>
     </form>

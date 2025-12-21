@@ -7,17 +7,21 @@ import { AsignacionAulaComponent } from './components/asignacion-aula/asignacion
 import { SolicitudesCambioComponent } from './components/solicitudes-cambio/solicitudes-cambio.component';
 import { PortalDocenteComponent } from './components/portal-docente/portal-docente.component';
 import { MiAulaAsignadaComponent } from './components/mi-aula-asignada/mi-aula-asignada.component';
+import { RoleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'inventario', component: InventarioComponent },
-  { path: 'usuarios', component: UsuariosComponent },
-  { path: 'reportes', component: ReportesComponent },
-  { path: 'asignacion-aula', component: AsignacionAulaComponent },
-  { path: 'solicitudes-cambio', component: SolicitudesCambioComponent },
-  { path: 'portal-docente', component: PortalDocenteComponent },
-  { path: 'mi-aula-asignada', component: MiAulaAsignadaComponent },
+  // Rutas para Admin y Coordinador
+  { path: 'inventario', component: InventarioComponent, canActivate: [RoleGuard], data: { role: [1, 2] } },
+  { path: 'asignacion-aula', component: AsignacionAulaComponent, canActivate: [RoleGuard], data: { role: [1, 2] } },
+  { path: 'solicitudes-cambio', component: SolicitudesCambioComponent, canActivate: [RoleGuard], data: { role: [1, 2] } },
+  // Rutas solo para Admin
+  { path: 'usuarios', component: UsuariosComponent, canActivate: [RoleGuard], data: { role: [1] } },
+  { path: 'reportes', component: ReportesComponent, canActivate: [RoleGuard], data: { role: [1] } },
+  // Rutas para Docente
+  { path: 'portal-docente', component: PortalDocenteComponent, canActivate: [RoleGuard], data: { role: [3] } },
+  { path: 'mi-aula-asignada', component: MiAulaAsignadaComponent, canActivate: [RoleGuard], data: { role: [3] } },
   { path: '**', redirectTo: '/login' }
 ];
 
