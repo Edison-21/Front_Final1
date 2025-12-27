@@ -45,7 +45,10 @@ private baseUrl = 'http://localhost:8080/api'; // Ajusta si usas otro puerto
 
   // Método POST general
 post<T>(endpoint: string, body: any): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}/${endpoint}`, body);
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    return this.http.post<T>(`${this.baseUrl}/${endpoint}`, body, { headers });
   }
   // Método GET general
   get<T>(endpoint: string) {

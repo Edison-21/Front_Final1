@@ -47,11 +47,13 @@ export class LoginComponent {
 
   this.isLoading = true;
 
-this.authService.login(this.email, this.password).subscribe({
+  this.authService.login(this.email, this.password).subscribe({
     next: (usuario) => {
+      console.log('Login exitoso, usuario:', usuario);
       this.isLoading = false;
 
       const rol = usuario.idRol;
+      console.log('Rol del usuario:', rol);
 
       if (rol === 1 || rol === 2) {
         this.router.navigate(['/inventario']);
@@ -60,16 +62,27 @@ this.authService.login(this.email, this.password).subscribe({
         this.router.navigate(['/portal-docente']);
       } 
       else {
-        this.router.navigate(['/portal-usuario']);
+        // Si el rol no es reconocido, redirigir al login o inventario por defecto
+        console.warn('Rol no reconocido, redirigiendo a inventario');
+        this.router.navigate(['/inventario']);
       }
     },
-    error: () => {
+    error: (error) => {
+      console.error('Error en login:', error);
       this.isLoading = false;
-      this.errorMessage = 'Email o contraseña incorrectos';
+      
+      // Mensaje de error más descriptivo
+      if (error.error && error.error.message) {
+        this.errorMessage = error.error.message;
+      } else if (error.status === 401 || error.status === 403) {
+        this.errorMessage = 'Email o contraseña incorrectos';
+      } else if (error.status === 0) {
+        this.errorMessage = 'No se pudo conectar con el servidor. Verifique que el backend esté corriendo.';
+      } else {
+        this.errorMessage = 'Error al iniciar sesión. Por favor, intente nuevamente.';
+      }
     }
-});
-
+  });
 }
 
 }
-

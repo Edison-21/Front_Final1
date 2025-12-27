@@ -87,8 +87,9 @@ loadAulas(): void {
   this.aulasAsignadas = [];
 
   this.bienes.forEach(b => {
-    if (b.aula && !this.aulasAsignadas.some(a => a.idAula === b.aula.idAula)) {
-      this.aulasAsignadas.push(b.aula);
+    const aula = b.aula;
+    if (aula && !this.aulasAsignadas.some(a => a.idAula === aula.idAula)) {
+      this.aulasAsignadas.push(aula);
     }
   });
 

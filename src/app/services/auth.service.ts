@@ -50,34 +50,69 @@ export class AuthService {
     password: contraseña
   }).pipe(
     map(response => {
+      console.log('Respuesta del backend:', response);
+      
+      // El backend puede devolver diferentes estructuras, intentamos varias opciones
+      const emailResponse = response.email || response.emailUsuario || email;
+      const rolResponse = response.rol || response.role || response.idRol;
+      const tokenResponse = response.token || response.jwt;
+      const nombreResponse = response.nombre || response.nombreUsuario || '';
+      const idUsuarioResponse = response.idUsuario || response.id || 0;
+
+      // Mapear el rol correctamente
+      let idRol: number;
+      if (typeof rolResponse === 'number') {
+        idRol = rolResponse;
+      } else {
+        idRol = this.mapRolToId(rolResponse);
+      }
+
+      console.log('Rol recibido del backend:', rolResponse, '→ Mapeado a idRol:', idRol);
 
       const usuario: Usuario = {
-        idUsuario: 0, // no viene del back
-        nombre: '',
-        email: response.email,
+        idUsuario: idUsuarioResponse,
+        nombre: nombreResponse,
+        email: emailResponse,
         contraseña: '',
-        estado: true,
-        fechaRegistro: new Date().toISOString(),
-        idRol: this.mapRolToId(response.rol)
+        estado: response.estado !== undefined ? response.estado : true,
+        fechaRegistro: response.fechaRegistro || new Date().toISOString(),
+        idRol: idRol
       };
+
+      console.log('Usuario creado:', usuario);
 
       this.currentUser = usuario;
       localStorage.setItem('currentUser', JSON.stringify(usuario));
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('token', tokenResponse);
 
-            this.redirectByRole(usuario.idRol);
-
+      // NO hacemos redirect aquí, lo maneja el componente
       return usuario;
     })
   );
 }
-private mapRolToId(rol: string): number {
-  switch (rol) {
-    case 'ADMIN': return 1;
-    case 'COORDINADOR': return 2;
-    case 'DOCENTE': return 3;
-    default: return 4;
+
+private mapRolToId(rol: string | number): number {
+  // Si ya es un número, lo devolvemos
+  if (typeof rol === 'number') {
+    return rol;
   }
+  
+  // Si es string, lo convertimos a mayúsculas y eliminamos espacios
+  const rolUpper = String(rol).toUpperCase().trim();
+  
+  // Buscar coincidencias parciales también (ej: "Administrador" contiene "ADMIN")
+  if (rolUpper.includes('ADMIN') || rolUpper === '1') {
+    return 1;
+  }
+  if (rolUpper.includes('COORDINADOR') || rolUpper === '2') {
+    return 2;
+  }
+  if (rolUpper.includes('DOCENTE') || rolUpper === '3') {
+    return 3;
+  }
+  
+  console.warn('Rol no reconocido:', rol, 'usando rol por defecto (Usuario)');
+  return 4;
 }
 
 
