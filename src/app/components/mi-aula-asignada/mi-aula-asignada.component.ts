@@ -27,7 +27,7 @@ export class MiAulaAsignadaComponent implements OnInit {
     const user = this.authService.getCurrentUser();
     if (user) {
       this.currentUser = user.nombre;
-      this.currentUserId = user.id_usuario;
+      this.currentUserId = user.idUsuario;
       this.loadMiAsignacion();
     }
   }
@@ -51,7 +51,7 @@ export class MiAulaAsignadaComponent implements OnInit {
   loadAulaDetalle(idAula: number): void {
     this.apiService.getAulas().subscribe({
       next: (aulas) => {
-        this.miAula = aulas.find(a => a.id_aula === idAula) || null;
+        this.miAula = aulas.find(a => a.idAula === idAula) || null;
       },
       error: (error) => {
         console.error('Error cargando aula:', error);

@@ -25,7 +25,7 @@
             <tr *ngFor="let solicitud of filteredSolicitudes">
               <td>
                 <div class="id-estado-cell">
-                  <span class="solicitud-id">#{{ solicitud.id_solicitud }}</span>
+                  <span class="solicitud-id">#{{ solicitud.idSolicitud }}</span>
                   <span class="estado-badge" 
                         [class.pendiente]="solicitud.estado === 'Pendiente'"
                         [class.aceptada]="solicitud.estado === 'Aceptada'"
@@ -37,7 +37,7 @@
               </td>
               <td>
                 <div class="docente-aula-cell">
-                  <div class="docente">Bien ID: {{ solicitud.id_bien }}</div>
+                  <div class="docente">Bien ID: {{ solicitud.bien }}</div>
                   <div class="aula" *ngIf="solicitud.bien">{{ solicitud.bien.nombre_bien }}</div>
                 </div>
               </td>
@@ -88,7 +88,7 @@
 <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
   <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="closeDetailModal()">×</button>
-    <h2 class="modal-title">Solicitud #{{ selectedSolicitud?.id_solicitud }}</h2>
+    <h2 class="modal-title">Solicitud #{{ selectedSolicitud?.idSolicitud }}</h2>
     
     <div class="detail-content" *ngIf="selectedSolicitud">
       <div class="detail-row">

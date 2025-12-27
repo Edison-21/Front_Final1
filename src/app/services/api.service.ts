@@ -10,6 +10,7 @@ import { Asignacion } from '../models/asignacion.model';
 import { Docente } from '../models/docente.model';
 import { Solicitud } from '../models/solicitud.model';
 import { Notificacion } from '../models/notificacion.model';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -27,44 +28,39 @@ export class ApiService {
   ];
 
   private roles: Rol[] = [
-    { id_rol: 1, nombre: 'Admin' },
-    { id_rol: 2, nombre: 'Coordinador' },
-    { id_rol: 3, nombre: 'Docente' },
-    { id_rol: 4, nombre: 'Usuario' }
+    { idRol: 1, nombre: 'Admin' },
+    { idRol: 2, nombre: 'Coordinador' },
+    { idRol: 3, nombre: 'Docente' },
   ];
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    });
+  }
+private baseUrl = 'http://localhost:8080/api'; // Ajusta si usas otro puerto
 
-  // Métodos para Categorías
-  getCategorias(): Observable<Categoria[]> {
-    return of(this.categorias).pipe(delay(300));
+  constructor(private http: HttpClient) {}
+
+  // Método POST general
+post<T>(endpoint: string, body: any): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}/${endpoint}`, body);
+  }
+  // Método GET general
+  get<T>(endpoint: string) {
+    return this.http.get<T>(`${this.baseUrl}/${endpoint}`);
   }
 
-  getCategoriaById(id: number): Observable<Categoria | null> {
-    const categoria = this.categorias.find(c => c.id_categoria === id);
-    return of(categoria || null).pipe(delay(300));
+  // Puedes agregar put y delete si los necesitas
+  put<T>(endpoint: string, body: any) {
+    return this.http.put<T>(`${this.baseUrl}/${endpoint}`, body);
   }
 
-  createCategoria(categoria: Categoria): Observable<Categoria> {
-    categoria.id_categoria = this.categorias.length + 1;
-    this.categorias.push(categoria);
-    return of(categoria).pipe(delay(300));
+  delete<T>(endpoint: string) {
+    return this.http.delete<T>(`${this.baseUrl}/${endpoint}`);
   }
-
-  updateCategoria(categoria: Categoria): Observable<Categoria> {
-    const index = this.categorias.findIndex(c => c.id_categoria === categoria.id_categoria);
-    if (index >= 0) {
-      this.categorias[index] = categoria;
-    }
-    return of(categoria).pipe(delay(300));
-  }
-
-  deleteCategoria(id: number): Observable<boolean> {
-    const index = this.categorias.findIndex(c => c.id_categoria === id);
-    if (index >= 0) {
-      this.categorias.splice(index, 1);
-      return of(true).pipe(delay(300));
-    }
-    return of(false).pipe(delay(300));
-  }
+ 
 
   // Métodos para Roles
   getRoles(): Observable<Rol[]> {
@@ -72,77 +68,58 @@ export class ApiService {
   }
 
   // Métodos para Usuarios
-  getUsuarios(): Observable<Usuario[]> {
-    // TODO: Implementar con datos reales
-    return of([]).pipe(delay(300));
-  }
 
   getUsuarioById(id: number): Observable<Usuario | null> {
     return of(null).pipe(delay(300));
   }
 
-  createUsuario(usuario: Usuario): Observable<Usuario> {
-    return of(usuario).pipe(delay(300));
-  }
-
-  updateUsuario(usuario: Usuario): Observable<Usuario> {
-    return of(usuario).pipe(delay(300));
-  }
-
-  deleteUsuario(id: number): Observable<boolean> {
-    return of(true).pipe(delay(300));
-  }
-
   // Métodos para Bienes
-  getBienes(): Observable<Bien[]> {
-    return of([]).pipe(delay(300));
-  }
+  
 
-  getBienById(id: number): Observable<Bien | null> {
-    return of(null).pipe(delay(300));
-  }
-
-  createBien(bien: Bien): Observable<Bien> {
-    return of(bien).pipe(delay(300));
-  }
-
-  updateBien(bien: Bien): Observable<Bien> {
-    return of(bien).pipe(delay(300));
-  }
-
-  deleteBien(id: number): Observable<boolean> {
-    return of(true).pipe(delay(300));
-  }
-
-  // Métodos para Aulas
+  // ✅ AULAS (ESTE ES EL IMPORTANTE)
   getAulas(): Observable<Aula[]> {
-    return of([]).pipe(delay(300));
+    return this.http.get<Aula[]>(`${this.baseUrl}/aulas`);
   }
 
-  createAula(aula: Aula): Observable<Aula> {
-    return of(aula).pipe(delay(300));
-  }
+ 
 
-  updateAula(aula: Aula): Observable<Aula> {
-    return of(aula).pipe(delay(300));
-  }
-
-  // Métodos para Asignaciones
+  // Asignaciones
   getAsignaciones(): Observable<Asignacion[]> {
-    return of([]).pipe(delay(300));
+    return this.http.get<Asignacion[]>(`${this.baseUrl}/asignaciones`);
   }
 
-  createAsignacion(asignacion: Asignacion): Observable<Asignacion> {
-    return of(asignacion).pipe(delay(300));
-  }
+  createAsignacion(data: { idAula: number; idUsuario: number }) {
+  return this.http.post<Asignacion>(
+    `${this.baseUrl}/asignaciones`,
+    data
+  );
+}
 
-  updateAsignacion(asignacion: Asignacion): Observable<Asignacion> {
-    return of(asignacion).pipe(delay(300));
-  }
+  updateAsignacion(id: number, body: any) {
+  return this.http.put<Asignacion>(
+    `${this.baseUrl}/asignaciones/${id}`,
+    body
+  );
+}
+
+  deleteAsignacion(id: number) {
+  return this.http.delete(`${this.baseUrl}/asignaciones/${id}`);
+}
+
 
   // Métodos para Docentes
   getDocentes(): Observable<Docente[]> {
     return of([]).pipe(delay(300));
+  }
+ // Obtener todas las solicitudes del docente
+getSolicitudesDocente(idDocente: number) {
+  return this.http.get<Solicitud[]>(`${this.baseUrl}/solicitudes/docente/${idDocente}`);
+}
+
+
+  // Crear nueva solicitud
+  createSolicitud(body: any): Observable<Solicitud> {
+    return this.http.post<Solicitud>(`${this.baseUrl}/solicitudes`, body);
   }
 
   // Métodos para Solicitudes
@@ -150,6 +127,7 @@ export class ApiService {
     return of([]).pipe(delay(300));
   }
 
+  
   updateSolicitud(solicitud: Solicitud): Observable<Solicitud> {
     return of(solicitud).pipe(delay(300));
   }
@@ -162,4 +140,38 @@ export class ApiService {
   marcarNotificacionLeida(id: number): Observable<boolean> {
     return of(true).pipe(delay(300));
   }
+  //USUARIOS
+   getUsuarios(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(
+      `${this.baseUrl}/usuarios`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  createUsuario(usuario: Usuario): Observable<Usuario> {
+    return this.http.post<Usuario>(
+      `${this.baseUrl}/usuarios`,
+      usuario,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  updateUsuario(id: number, payload: any) {
+  return this.http.put<Usuario>(
+    `${this.baseUrl}/usuarios/${id}`,
+    payload
+  );
+}
+
+  getBienes(): Observable<Bien[]> {
+    return this.http.get<Bien[]>(`${this.baseUrl}/bienes`);
+  }
+
+  deleteUsuario(id: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/usuarios/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
 }

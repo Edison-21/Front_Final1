@@ -1,5 +1,5 @@
 export interface Aula {
-  id_aula: number;
+  idAula: number;
   nombre: string;
   tipo: string;
   capacidad: number;

@@ -48,14 +48,14 @@
               <td>{{ usuario.email }}</td>
               <td>
                 <span class="rol-badge" 
-                      [class.admin]="getRolNombre(usuario.id_rol) === 'Admin'" 
-                      [class.coordinador]="getRolNombre(usuario.id_rol) === 'Coordinador'" 
-                      [class.docente]="getRolNombre(usuario.id_rol) === 'Docente'"
-                      [class.usuario]="getRolNombre(usuario.id_rol) === 'Usuario'">
-                  {{ getRolNombre(usuario.id_rol) }}
+                      [class.admin]="getRolNombre(usuario.idRol) === 'Admin'" 
+                      [class.coordinador]="getRolNombre(usuario.idRol) === 'Coordinador'" 
+                      [class.docente]="getRolNombre(usuario.idRol) === 'Docente'"
+                      [class.usuario]="getRolNombre(usuario.idRol) === 'Usuario'">
+{{ usuario.rol?.nombre || 'Sin rol' }}
                 </span>
               </td>
-              <td>{{ formatDate(usuario.fecha_registro) }}</td>
+              <td>{{ formatDate(usuario.fechaRegistro) }}</td>
               <td>
                 <span class="status-badge" [class.active]="usuario.estado" [class.inactive]="!usuario.estado">
                   {{ usuario.estado ? 'Activo' : 'Inactivo' }}
@@ -73,6 +73,17 @@
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                       <path d="M5 5 L15 15 M15 5 L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
+                  </button>
+                  <button class="action-btn edit-btn"
+                    (click)="openEditModal(usuario)"
+                     title="Editar">
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                       <path d="M4 14 L14 4" stroke="currentColor" stroke-width="2"/>
+                     <path d="M4 14 L4 16 L6 16 L16 6 L14 4 Z"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          fill="none"/>
+                     </svg>
                   </button>
                 </div>
               </td>
@@ -109,20 +120,71 @@
         </div>
         <div class="form-field">
           <label>Rol *</label>
-          <select [(ngModel)]="nuevoUsuario.id_rol" name="id_rol" required>
+          <select [(ngModel)]="nuevoUsuario.idRol" name="id_rol" required>
             <option value="0">Seleccione un rol</option>
-            <option *ngFor="let rol of roles" [value]="rol.id_rol">{{ rol.nombre }}</option>
+            <option *ngFor="let rol of roles" [value]="rol.idRol">{{ rol.nombre }}</option>
           </select>
         </div>
         <div class="form-field">
           <label>Fecha de Registro</label>
-          <input type="date" [(ngModel)]="nuevoUsuario.fecha_registro" name="fecha_registro">
+          <input type="date" [(ngModel)]="nuevoUsuario.fechaRegistro" name="fecha_registro">
         </div>
       </div>
       
       <div class="modal-actions">
         <button type="submit" class="btn-save">Guardar Usuario</button>
         <button type="button" class="btn-cancel" (click)="closeAddModal()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Modal Editar Usuario -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeEditModal()">×</button>
+    <h2 class="modal-title">Editar Usuario</h2>
+
+    <form class="modal-form" (ngSubmit)="updateUsuario()">
+      <div class="form-fields">
+
+        <div class="form-field">
+          <label>Nombre Completo *</label>
+          <input type="text"
+                 [(ngModel)]="nuevoUsuario.nombre"
+                 name="nombre"
+                 required>
+        </div>
+
+        <div class="form-field">
+          <label>Email *</label>
+          <input type="email"
+                 [(ngModel)]="nuevoUsuario.email"
+                 name="email"
+                 required>
+        </div>
+
+        <div class="form-field">
+          <label>Rol *</label>
+          <select [(ngModel)]="nuevoUsuario.idRol" name="idRol" required>
+            <option *ngFor="let rol of roles" [value]="rol.idRol">
+              {{ rol.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Estado</label>
+          <select [(ngModel)]="nuevoUsuario.estado" name="estado">
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-save">Guardar Cambios</button>
+        <button type="button" class="btn-cancel" (click)="closeEditModal()">Cancelar</button>
       </div>
     </form>
   </div>

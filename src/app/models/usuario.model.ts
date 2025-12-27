@@ -1,12 +1,12 @@
 import { Rol } from './rol.model';
 
 export interface Usuario {
-  id_usuario: number;
+  idUsuario: number;          // viene del backend
   nombre: string;
   email: string;
-  contraseña: string;
+  contraseña?: string;         // solo para crear / editar
   estado: boolean;
-  fecha_registro: Date | string;
-  id_rol: number;
-  rol?: Rol;
+  fechaRegistro?: string;      // backend usa LocalDateTime
+  idRol: number;               // 🔴 CLAVE: backend espera idRol
+  rol?: Rol;                   // solo para mostrar
 }

@@ -1,9 +1,9 @@
 import { Bien } from './bien.model';
 
 export interface Solicitud {
-  id_solicitud: number;
-  id_detalle: number;
-  id_bien: number;
+  idSolicitud?: number;
+  bien: any;
+  descripcion: string;
   estado: string;
-  bien?: Bien;
+  
 }

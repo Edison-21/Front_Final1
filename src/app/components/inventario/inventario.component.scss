@@ -496,11 +496,8 @@
 // Modal Styles
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -510,18 +507,16 @@
 
 .modal-content {
   background: white;
-  border-radius: 20px;
-  padding: 45px;
+  border-radius: 18px;
+  padding: 40px;
   width: 90%;
   max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25),
-              0 0 0 1px rgba(0, 0, 0, 0.05);
-  animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: modalSlideIn 0.35s ease;
 }
+
 
 @keyframes modalSlideIn {
   from {
@@ -705,5 +700,55 @@
   .add-button {
     width: 100%;
   }
+  /* ===== BOTONES MODAL ===== */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+/* BOTÓN GUARDAR */
+.btn-save {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #1e40af, #1e3a8a);
+  transform: translateY(-1px);
+}
+
+.btn-save:active {
+  transform: scale(0.97);
+}
+
+/* BOTÓN CANCELAR */
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-cancel:active {
+  transform: scale(0.97);
+}
 }
 

@@ -22,19 +22,24 @@
         
         <form (ngSubmit)="enviarSolicitud()">
           <div class="form-group">
-            <label for="aula">Aula o Laboratorio Afectado</label>
-            <select 
-              id="aula"
-              name="aula"
-              [(ngModel)]="aulaSeleccionada"
-              class="form-select"
-              required>
-              <option value="">Seleccione un aula</option>
-              <option *ngFor="let aula of aulas" [value]="aula.nombre">
-                {{ aula.nombre }} - {{ aula.ubicacion }}
-              </option>
-            </select>
-          </div>
+  <label for="aula">Aula</label>
+ <select id="aula" [(ngModel)]="aulaSeleccionada" name="aula" required>
+  <option *ngFor="let aula of aulasAsignadas" [ngValue]="aula.idAula">
+    {{ aula.nombre }}
+  </option>
+</select>
+</div>
+
+<div class="form-group">
+  <label for="bien">Bien</label>
+ <select id="bien" [(ngModel)]="bienSeleccionado" name="bien" required>
+  <option *ngFor="let bien of bienesAsignados" [ngValue]="bien.idBien">
+    {{ bien.nombre_bien }} - {{ bien.aula?.nombre || 'N/A' }}
+  </option>
+</select>
+
+</div>
+
 
           <div class="form-group">
             <label for="tipo">Tipo de Solicitud</label>
@@ -88,20 +93,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let solicitud of misSolicitudes">
-                <td class="aula-cell">{{ solicitud.bien?.ubicacion || 'N/A' }}</td>
-                <td class="tipo-cell">{{ solicitud.estado }}</td>
-                <td class="detalle-cell">{{ solicitud.bien?.descripcion || 'N/A' }}</td>
-                <td>
-                  <span class="estado-badge"
-                        [class.pendiente]="solicitud.estado === 'Pendiente'"
-                        [class.aceptada]="solicitud.estado === 'Aceptada'"
-                        [class.rechazada]="solicitud.estado === 'Rechazada'">
-                    <span class="estado-dot"></span>
-                    {{ solicitud.estado }}
-                  </span>
-                </td>
-              </tr>
+             <tr *ngFor="let solicitud of misSolicitudes">
+     <td>{{ solicitud.bien?.aula?.nombre || 'N/A' }}</td>
+<td>{{ solicitud.descripcion.split(':')[0] }}</td>
+<td>{{ solicitud.descripcion.split(':').slice(1).join(':') }}</td>
+<td><span class="estado-badge pendiente">{{ solicitud.estado }}</span></td>
+            </tr>
               <tr *ngIf="misSolicitudes.length === 0">
                 <td colspan="4" class="no-data">No hay solicitudes registradas</td>
               </tr>

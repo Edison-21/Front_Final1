@@ -1,72 +1,66 @@
 import { Component, OnInit } from '@angular/core';
-import { Bien } from '../../models/bien.model';
-import { Categoria } from '../../models/categoria.model';
-import { ApiService } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
+import Swal from 'sweetalert2';
+import { BienesService } from '../../services/bienes.service';
+import { CategoriasService } from '../../services/categorias.service';
+import { AulasService } from '../../services/aulas.service';
 
 @Component({
   selector: 'app-inventario',
-  standalone: false,
   templateUrl: './inventario.component.html',
   styleUrls: ['./inventario.component.scss']
 })
 export class InventarioComponent implements OnInit {
-  currentUser = '';
-  searchTerm: string = '';
-  showAddModal: boolean = false;
-  showEditModal: boolean = false;
-  showDetailModal: boolean = false;
-  showCategoryModal: boolean = false;
-  selectedBien: Bien | null = null;
-  
-  bienes: Bien[] = [];
-  categorias: Categoria[] = [];
-  filteredBienes: Bien[] = [];
-  
-  // Estadísticas
-  totalBienes: number = 0;
-  totalCategorias: number = 0;
-  bienesDisponibles: number = 0;
-  bienesAsignados: number = 0;
-  
-  // Formulario para nuevo bien
-  nuevoBien: Partial<Bien> = {
-    codigo_bien: '',
-    codigo_inventario: '',
-    codigo_secap: '',
-    nombre_bien: '',
-    descripcion: '',
-    tipo_bien: '',
-    clase_bien: '',
-    cuenta_tipo_bien: '',
-    marca: '',
-    modelo: '',
-    serie: '',
-    especificaciones: '',
-    estado: 'Disponible',
-    detalle_estado: '',
-    origen: '',
-    provincia: '',
-    ubicacion: '',
-    custodio: '',
-    valor_compra_inicial: 0,
-    valor_con_iva: 0,
-    observaciones: '',
-    observaciones2: '',
-    id_categoria: 0
-  };
 
-  nuevaCategoria: Categoria = {
-    id_categoria: 0,
-    nombre: ''
-  };
+  // 👤 Usuario
+  currentUser: string = 'Administrador';
 
-  // Filtros
-  showFilterDropdown: boolean = false;
-  selectedFilter: string = 'Mostrar Todos';
-  estados: string[] = ['Disponible', 'Asignado', 'En Mantenimiento', 'Dañado', 'Baja'];
+  // 🆕 Nuevo bien
+  nuevoBien: any = {
+  codigoBien: '',
+  nombreBien: '',
+  tipoBien: '',
+  claseBien: '',
+  cuentaTipoBien: '',
+  codigoInventario: '',
+  codigoSecap: '',
+  descripcion: '',
+  especificaciones: '',
+  marca: '',
+  modelo: '',
+  serie: '',
+  valorCompraInicial: null,
+  valorConIva: null,
+  estado: '',
+  detalleEstado: '',
+  custodio: '',
+  ubicacion: '',
+  provincia: '',
+  observaciones: '',
+  observaciones2: '',
+  origen: 'INVENTARIO',
+  categoria: {
+    idCategoria: null
+  },
+};
+    aulas: any[] = [];
+
+
+  // 📊 Contadores
+  totalBienes = 0;
+  totalCategorias = 0;
+  bienesDisponibles = 0;
+  bienesAsignados = 0;
+
+  // 🔽 Filtros
+  selectedFilter: string = 'Mostrar todos';
+  showFilterDropdown = false;
+  selectedBien: any = {
+  categoria: { idCategoria: null },
+  aula: { idAula: null }
+};
+
   filterOptions: string[] = [
-    'Mostrar Todos',
+    'Mostrar todos',
     'Disponible',
     'Asignado',
     'En Mantenimiento',
@@ -74,227 +68,227 @@ export class InventarioComponent implements OnInit {
     'Baja'
   ];
 
+  // 📋 Datos
+  bienes: any[] = [];
+  filteredBienes: any[] = [];
+  categorias: any[] = [];
+
+  // 🪟 Modales
+  showAddModal = false;
+  showCategoryModal = false;
+  showDetailModal = false;
+
+  searchTerm = '';
+
+  nuevaCategoria: any = { nombre: '' };
+
   constructor(
-    private apiService: ApiService,
-    private authService: AuthService
+    private bienesService: BienesService,
+    private categoriasService: CategoriasService,
+      private aulasService: AulasService
+
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.currentUser = user.nombre;
-    }
-    this.loadCategorias();
     this.loadBienes();
-    
-    // Cerrar dropdown al hacer click fuera
-    document.addEventListener('click', (event: any) => {
-      if (!event.target.closest('.filter-dropdown-wrapper')) {
-        this.showFilterDropdown = false;
-      }
+    this.loadCategorias();
+      this.loadAulas();
+  }
+
+  // 📦 Cargar bienes
+  loadBienes() {
+    this.bienesService.getAll().subscribe(data => {
+      this.bienes = data;
+      this.filteredBienes = data;
+      this.totalBienes = data.length;
     });
   }
 
-  loadCategorias(): void {
-    this.apiService.getCategorias().subscribe({
-      next: (categorias) => {
-        this.categorias = categorias;
-        this.totalCategorias = categorias.length;
-      },
-      error: (error) => {
-        console.error('Error cargando categorías:', error);
-      }
+  // 📂 Cargar categorías
+  loadCategorias() {
+    this.categoriasService.getAll().subscribe(data => {
+      this.categorias = data;
+      this.totalCategorias = data.length;
     });
   }
 
-  loadBienes(): void {
-    this.apiService.getBienes().subscribe({
-      next: (bienes) => {
-        this.bienes = bienes;
-        this.filteredBienes = [...bienes];
-        this.updateStatistics();
-        this.applyFilters();
-      },
-      error: (error) => {
-        console.error('Error cargando bienes:', error);
-      }
-    });
+  // 🏷️ Nombre categoría
+  getCategoriaNombre(categoria: any): string {
+    return categoria?.nombre || 'Sin categoría';
   }
 
-  updateStatistics(): void {
-    this.totalBienes = this.bienes.length;
-    this.bienesDisponibles = this.bienes.filter(b => b.estado === 'Disponible').length;
-    this.bienesAsignados = this.bienes.filter(b => b.estado === 'Asignado').length;
-  }
-
-  onSearch(): void {
+  // 🔍 Buscar
+  onSearch() {
     this.applyFilters();
   }
 
-  applyFilters(): void {
-    let filtered = [...this.bienes];
-
-    // Aplicar búsqueda
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(bien =>
-        bien.codigo_bien?.toLowerCase().includes(term) ||
-        bien.codigo_inventario?.toLowerCase().includes(term) ||
-        bien.nombre_bien?.toLowerCase().includes(term) ||
-        bien.descripcion?.toLowerCase().includes(term) ||
-        bien.ubicacion?.toLowerCase().includes(term)
-      );
-    }
-
-    // Aplicar filtro de estado
-    if (this.selectedFilter !== 'Mostrar Todos') {
-      filtered = filtered.filter(bien => bien.estado === this.selectedFilter);
-    }
-
-    this.filteredBienes = filtered;
+  // ➕ Modal Bien
+  openAddModal() {
+    this.showAddModal = true;
   }
 
-  selectFilter(filter: string): void {
-    this.selectedFilter = filter;
+  closeAddModal() {
+    this.showAddModal = false;
+  }
+
+  // ✅ Validar bien
+ validarBien(): boolean {
+  const b = this.nuevoBien;
+
+  if (
+    !b.codigoBien ||
+    !b.nombreBien ||
+    !b.tipoBien ||
+    !b.claseBien ||
+    !b.cuentaTipoBien ||
+    !b.codigoInventario ||
+    !b.codigoSecap ||
+    !b.estado ||
+    !b.ubicacion ||
+    !b.provincia ||
+    !b.custodio ||
+    !b.valorCompraInicial ||
+    !b.valorConIva ||
+    !b.categoria.idCategoria
+  ) {
+    Swal.fire(
+      'Campos incompletos',
+      'Todos los campos obligatorios deben ser llenados',
+      'warning'
+    );
+    return false;
+  }
+
+  return true;
+}
+
+loadAulas() {
+  this.aulasService.getAll().subscribe(data => {
+    this.aulas = data;
+  });
+}
+
+  // 💾 Guardar bien
+  saveBien() {
+    if (!this.validarBien()) return;
+
+    this.bienesService.create(this.nuevoBien).subscribe({
+      next: () => {
+        Swal.fire('Éxito', 'Bien registrado correctamente', 'success');
+        this.closeAddModal();
+        this.loadBienes();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo guardar el bien', 'error');
+      }
+    });
+  }
+
+  // 👁️ Detalles
+openEditModal(bien: any) {
+
+  this.selectedBien = JSON.parse(JSON.stringify(bien));
+
+  // 🔥 ASEGURAR CATEGORIA
+  if (!this.selectedBien.categoria) {
+    this.selectedBien.categoria = { idCategoria: null };
+  }
+
+  // 🔥 ASEGURAR AULA
+  if (!this.selectedBien.aula) {
+    this.selectedBien.aula = { idAula: null };
+  }
+
+  this.showDetailModal = true;
+}
+
+
+
+
+
+  closeDetailModal() {
+    this.showDetailModal = false;
+  }
+
+  // 🗑️ Eliminar
+  deleteBien(bien: any) {
+    Swal.fire({
+      title: '¿Eliminar bien?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar'
+    }).then(result => {
+      if (result.isConfirmed) {
+        this.bienesService.delete(bien.idBien).subscribe(() => {
+          Swal.fire('Eliminado', 'Bien eliminado', 'success');
+          this.loadBienes();
+        });
+      }
+    });
+  }
+
+  // 📂 Categoría
+  openCategoryModal() {
+    this.showCategoryModal = true;
+  }
+
+  closeCategoryModal() {
+    this.showCategoryModal = false;
+  }
+
+  saveCategoria() {
+    if (!this.nuevaCategoria.nombre) {
+      Swal.fire('Atención', 'Ingrese el nombre de la categoría', 'warning');
+      return;
+    }
+
+    this.categoriasService.create(this.nuevaCategoria).subscribe(() => {
+      Swal.fire('Éxito', 'Categoría creada', 'success');
+      this.nuevaCategoria = { nombre: '' };
+      this.closeCategoryModal();
+      this.loadCategorias();
+    });
+  }
+
+  // 🔽 Filtros
+  toggleFilterDropdown() {
+    this.showFilterDropdown = !this.showFilterDropdown;
+  }
+
+  selectFilter(option: string) {
+    this.selectedFilter = option;
     this.showFilterDropdown = false;
     this.applyFilters();
   }
 
-  toggleFilterDropdown(): void {
-    this.showFilterDropdown = !this.showFilterDropdown;
-  }
+  applyFilters() {
+    const texto = this.searchTerm.toLowerCase();
 
-  openAddModal(): void {
-    this.nuevoBien = {
-      codigo_bien: '',
-      codigo_inventario: '',
-      codigo_secap: '',
-      nombre_bien: '',
-      descripcion: '',
-      tipo_bien: '',
-      clase_bien: '',
-      cuenta_tipo_bien: '',
-      marca: '',
-      modelo: '',
-      serie: '',
-      especificaciones: '',
-      estado: 'Disponible',
-      detalle_estado: '',
-      origen: '',
-      provincia: '',
-      ubicacion: '',
-      custodio: '',
-      valor_compra_inicial: 0,
-      valor_con_iva: 0,
-      observaciones: '',
-      observaciones2: '',
-      id_categoria: this.categorias.length > 0 ? this.categorias[0].id_categoria : 0
-    };
-    this.showAddModal = true;
+    this.filteredBienes = this.bienes.filter(b =>
+      (
+        b.codigoBien?.toLowerCase().includes(texto) ||
+        b.nombreBien?.toLowerCase().includes(texto) ||
+        b.descripcion?.toLowerCase().includes(texto)
+      ) &&
+      (
+        this.selectedFilter === 'Mostrar todos' ||
+        b.estado === this.selectedFilter
+      )
+    );
   }
-
-  closeAddModal(): void {
-    this.showAddModal = false;
-  }
-
-  openCategoryModal(): void {
-    this.nuevaCategoria = { id_categoria: 0, nombre: '' };
-    this.showCategoryModal = true;
-  }
-
-  closeCategoryModal(): void {
-    this.showCategoryModal = false;
-  }
-
-  saveBien(): void {
-    if (this.nuevoBien.nombre_bien && this.nuevoBien.codigo_bien && this.nuevoBien.id_categoria) {
-      const bien: Bien = {
-        id_bien: 0,
-        codigo_bien: this.nuevoBien.codigo_bien || '',
-        codigo_inventario: this.nuevoBien.codigo_inventario || '',
-        codigo_secap: this.nuevoBien.codigo_secap || '',
-        nombre_bien: this.nuevoBien.nombre_bien || '',
-        descripcion: this.nuevoBien.descripcion || '',
-        tipo_bien: this.nuevoBien.tipo_bien || '',
-        clase_bien: this.nuevoBien.clase_bien || '',
-        cuenta_tipo_bien: this.nuevoBien.cuenta_tipo_bien || '',
-        marca: this.nuevoBien.marca || '',
-        modelo: this.nuevoBien.modelo || '',
-        serie: this.nuevoBien.serie || '',
-        especificaciones: this.nuevoBien.especificaciones || '',
-        estado: this.nuevoBien.estado || 'Disponible',
-        detalle_estado: this.nuevoBien.detalle_estado || '',
-        origen: this.nuevoBien.origen || '',
-        provincia: this.nuevoBien.provincia || '',
-        ubicacion: this.nuevoBien.ubicacion || '',
-        custodio: this.nuevoBien.custodio || '',
-        valor_compra_inicial: this.nuevoBien.valor_compra_inicial || 0,
-        valor_con_iva: this.nuevoBien.valor_con_iva || 0,
-        observaciones: this.nuevoBien.observaciones || '',
-        observaciones2: this.nuevoBien.observaciones2 || '',
-        id_categoria: this.nuevoBien.id_categoria || 0
-      };
-
-      this.apiService.createBien(bien).subscribe({
-        next: (bienCreado) => {
-          this.bienes.push(bienCreado);
-          this.updateStatistics();
-          this.applyFilters();
-          this.closeAddModal();
-        },
-        error: (error) => {
-          console.error('Error guardando bien:', error);
-          alert('Error al guardar el bien. Por favor, intente nuevamente.');
-        }
-      });
-    }
-  }
-
-  saveCategoria(): void {
-    if (this.nuevaCategoria.nombre) {
-      this.apiService.createCategoria(this.nuevaCategoria).subscribe({
-        next: (categoria) => {
-          this.categorias.push(categoria);
-          this.totalCategorias = this.categorias.length;
-          this.closeCategoryModal();
-        },
-        error: (error) => {
-          console.error('Error guardando categoría:', error);
-          alert('Error al guardar la categoría. Por favor, intente nuevamente.');
-        }
-      });
-    }
-  }
-
-  viewDetails(bien: Bien): void {
-    this.selectedBien = bien;
-    this.showDetailModal = true;
-  }
-
-  closeDetailModal(): void {
-    this.showDetailModal = false;
-    this.selectedBien = null;
-  }
-
-  getCategoriaNombre(id_categoria: number): string {
-    const categoria = this.categorias.find(c => c.id_categoria === id_categoria);
-    return categoria ? categoria.nombre : 'Sin categoría';
-  }
-
-  deleteBien(bien: Bien): void {
-    if (confirm(`¿Está seguro de eliminar el bien ${bien.nombre_bien}?`)) {
-      this.apiService.deleteBien(bien.id_bien).subscribe({
-        next: () => {
-          this.bienes = this.bienes.filter(b => b.id_bien !== bien.id_bien);
-          this.updateStatistics();
-          this.applyFilters();
-        },
-        error: (error) => {
-          console.error('Error eliminando bien:', error);
-          alert('Error al eliminar el bien. Por favor, intente nuevamente.');
-        }
-      });
-    }
-  }
+  updateBien() {
+  this.bienesService.update(this.selectedBien.idBien, this.selectedBien)
+    .subscribe({
+      next: () => {
+        Swal.fire('Actualizado', 'Bien actualizado correctamente', 'success');
+        this.showDetailModal = false;
+        this.loadBienes();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo actualizar el bien', 'error');
+      }
+    });
 }
 
+}

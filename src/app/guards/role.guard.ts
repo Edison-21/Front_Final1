@@ -19,9 +19,9 @@ export class RoleGuard implements CanActivate {
     }
 
     const requiredRole = route.data['role'] as number[];
-    if (requiredRole && !requiredRole.includes(user.id_rol)) {
+    if (requiredRole && !requiredRole.includes(user.idRol)) {
       // Redirigir según el rol del usuario
-      const roleId = user.id_rol;
+      const roleId = user.idRol;
       if (roleId === 3) {
         this.router.navigate(['/portal-docente']);
       } else if (roleId === 1 || roleId === 2) {

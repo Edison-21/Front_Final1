@@ -1,7 +1,8 @@
+import { Aula } from './aula.model';
 import { Categoria } from './categoria.model';
 
 export interface Bien {
-  id_bien: number;
+  idBien: number;
   codigo_bien: string;
   codigo_inventario: string;
   codigo_secap: string;
@@ -26,4 +27,6 @@ export interface Bien {
   observaciones2: string;
   id_categoria: number;
   categoria?: Categoria;
+    aula: Aula;  // <-- agregar esta línea
+
 }

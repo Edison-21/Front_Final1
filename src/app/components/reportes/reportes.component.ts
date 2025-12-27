@@ -16,7 +16,7 @@ interface Reporte {
   styleUrls: ['./reportes.component.scss']
 })
 export class ReportesComponent implements OnInit {
-  currentUser = 'Ing Edison';
+  currentUser: string = 'Administrador';
   selectedFilter: string = 'TODOS';
   showDetailModal: boolean = false;
   selectedReporte: Reporte | null = null;

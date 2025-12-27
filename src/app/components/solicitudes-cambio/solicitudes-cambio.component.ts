@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./solicitudes-cambio.component.scss']
 })
 export class SolicitudesCambioComponent implements OnInit {
-  currentUser = '';
+  currentUser: string = 'Administrador';
   showDetailModal: boolean = false;
   selectedSolicitud: Solicitud | null = null;
   showConfirmModal: boolean = false;
@@ -60,9 +60,9 @@ export class SolicitudesCambioComponent implements OnInit {
     this.solicitudToProcess = solicitud;
     this.confirmAction = action;
     if (action === 'aceptar') {
-      this.confirmMessage = `¿Está seguro de aceptar la solicitud #${solicitud.id_solicitud}?`;
+      this.confirmMessage = `¿Está seguro de aceptar la solicitud #${solicitud.idSolicitud}?`;
     } else {
-      this.confirmMessage = `¿Está seguro de rechazar la solicitud #${solicitud.id_solicitud}?`;
+      this.confirmMessage = `¿Está seguro de rechazar la solicitud #${solicitud.idSolicitud}?`;
     }
     this.showConfirmModal = true;
   }
@@ -84,7 +84,7 @@ export class SolicitudesCambioComponent implements OnInit {
 
     this.apiService.updateSolicitud(solicitudActualizada).subscribe({
       next: (solicitud) => {
-        const index = this.solicitudes.findIndex(s => s.id_solicitud === solicitud.id_solicitud);
+        const index = this.solicitudes.findIndex(s => s.idSolicitud === solicitud.idSolicitud);
         if (index > -1) {
           this.solicitudes[index] = solicitud;
           this.filteredSolicitudes = [...this.solicitudes];

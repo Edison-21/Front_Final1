@@ -7,7 +7,6 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login/login.component';
-import { InventarioComponent } from './components/inventario/inventario.component';
 import { UsuariosComponent } from './components/usuarios/usuarios.component';
 import { ReportesComponent } from './components/reportes/reportes.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
@@ -16,19 +15,20 @@ import { SolicitudesCambioComponent } from './components/solicitudes-cambio/soli
 import { PortalDocenteComponent } from './components/portal-docente/portal-docente.component';
 import { MiAulaAsignadaComponent } from './components/mi-aula-asignada/mi-aula-asignada.component';
 import { routes } from './app.routes';
+import { InventarioComponent } from './components/inventario/inventario.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
-    InventarioComponent,
     UsuariosComponent,
     ReportesComponent,
     SidebarComponent,
     AsignacionAulaComponent,
     SolicitudesCambioComponent,
     PortalDocenteComponent,
-    MiAulaAsignadaComponent
+    MiAulaAsignadaComponent,
+    InventarioComponent
   ],
   imports: [
     BrowserModule,
@@ -36,7 +36,7 @@ import { routes } from './app.routes';
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    RouterModule.forRoot(routes)
+    RouterModule.forRoot(routes),
   ],
   providers: [],
   bootstrap: [AppComponent]

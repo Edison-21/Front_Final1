@@ -20,7 +20,6 @@ export class LoginComponent {
     { id: 1, name: 'Admin' },
     { id: 2, name: 'Coordinador' },
     { id: 3, name: 'Docente' },
-    { id: 4, name: 'Usuario' }
   ];
 
   constructor(
@@ -33,43 +32,44 @@ export class LoginComponent {
   }
 
   login(): void {
-    this.errorMessage = '';
-    
-    if (!this.email || !this.password) {
-      this.errorMessage = 'Por favor, ingrese email y contraseña';
-      return;
-    }
+  this.errorMessage = '';
 
-    // Validar formato de email básico
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(this.email)) {
-      this.errorMessage = 'Por favor, ingrese un email válido';
-      return;
-    }
+  if (!this.email || !this.password) {
+    this.errorMessage = 'Por favor, ingrese email y contraseña';
+    return;
+  }
 
-    this.isLoading = true;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(this.email)) {
+    this.errorMessage = 'Por favor, ingrese un email válido';
+    return;
+  }
 
-    // Usar el servicio de autenticación
-    if (this.authService.login(this.email, this.password, this.selectedRole)) {
-      setTimeout(() => {
-        this.isLoading = false;
-        // Redirigir según el rol
-        const roleId = this.selectedRole;
-        if (roleId === 3) {
-          // Docente
-          this.router.navigate(['/portal-docente']);
-        } else if (roleId === 1 || roleId === 2) {
-          // Admin o Coordinador
-          this.router.navigate(['/inventario']);
-        } else {
-          // Usuario
-          this.router.navigate(['/login']);
-        }
-      }, 500);
-    } else {
+  this.isLoading = true;
+
+this.authService.login(this.email, this.password).subscribe({
+    next: (usuario) => {
+      this.isLoading = false;
+
+      const rol = usuario.idRol;
+
+      if (rol === 1 || rol === 2) {
+        this.router.navigate(['/inventario']);
+      } 
+      else if (rol === 3) {
+        this.router.navigate(['/portal-docente']);
+      } 
+      else {
+        this.router.navigate(['/portal-usuario']);
+      }
+    },
+    error: () => {
       this.isLoading = false;
       this.errorMessage = 'Email o contraseña incorrectos';
     }
-  }
+});
+
+}
+
 }
 
