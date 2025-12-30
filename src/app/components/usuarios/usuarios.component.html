@@ -48,11 +48,11 @@
               <td>{{ usuario.email }}</td>
               <td>
                 <span class="rol-badge" 
-                      [class.admin]="getRolNombre(usuario.idRol) === 'Admin'" 
-                      [class.coordinador]="getRolNombre(usuario.idRol) === 'Coordinador'" 
-                      [class.docente]="getRolNombre(usuario.idRol) === 'Docente'"
-                      [class.usuario]="getRolNombre(usuario.idRol) === 'Usuario'">
-{{ usuario.rol?.nombre || 'Sin rol' }}
+                      [class.admin]="getRolNombre(usuario.idRol, usuario) === 'Admin' || getRolNombre(usuario.idRol, usuario) === 'ADMINISTRADOR' || getRolNombre(usuario.idRol, usuario) === 'Administrador'" 
+                      [class.coordinador]="getRolNombre(usuario.idRol, usuario) === 'Coordinador' || getRolNombre(usuario.idRol, usuario) === 'COORDINADOR'" 
+                      [class.docente]="getRolNombre(usuario.idRol, usuario) === 'Docente' || getRolNombre(usuario.idRol, usuario) === 'DOCENTE'"
+                      [class.usuario]="getRolNombre(usuario.idRol, usuario) === 'Usuario' || getRolNombre(usuario.idRol, usuario) === 'USUARIO'">
+{{ usuario.rol?.nombre || getRolNombre(usuario.idRol, usuario) }}
                 </span>
               </td>
               <td>{{ formatDate(usuario.fechaRegistro) }}</td>
@@ -116,7 +116,34 @@
         </div>
         <div class="form-field">
           <label>Contraseña *</label>
-          <input type="password" [(ngModel)]="passwordTemp" name="password" placeholder="Contraseña segura" required>
+          <div class="input-wrapper">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              [(ngModel)]="passwordTemp" 
+              name="password" 
+              placeholder="Contraseña segura" 
+              required>
+            <button 
+              type="button" 
+              class="eye-icon" 
+              [class.eye-open]="showPassword"
+              [class.eye-closed]="!showPassword"
+              (click)="togglePasswordVisibility()">
+              <!-- Ojo abierto -->
+              <svg *ngIf="showPassword" width="20" height="20" viewBox="0 0 20 20" fill="none" class="eye-svg">
+                <path d="M10 4 C6 4 3 6 1 10 C3 14 6 16 10 16 C14 16 17 14 19 10 C17 6 14 4 10 4 Z" 
+                      stroke="currentColor" stroke-width="1.5" fill="none" class="eye-outline"/>
+                <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" fill="none" class="eye-pupil"/>
+                <circle cx="10" cy="10" r="1.5" fill="currentColor" class="eye-center"/>
+              </svg>
+              <!-- Ojo cerrado -->
+              <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 20 20" fill="none" class="eye-svg">
+                <path d="M10 4 C6 4 3 6 1 10 C3 14 6 16 10 16 C14 16 17 14 19 10 C17 6 14 4 10 4 Z" 
+                      stroke="currentColor" stroke-width="1.5" fill="none" class="eye-outline"/>
+                <line x1="4" y1="6" x2="16" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="eye-line"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="form-field">
           <label>Rol *</label>

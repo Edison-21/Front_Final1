@@ -32,7 +32,7 @@
                         [class.pendiente]="solicitud.estado === 'PENDIENTE'"
                         [class.aceptada]="solicitud.estado === 'APROBADA'"
                         [class.rechazada]="solicitud.estado === 'DENEGADA'">
-                    {{ solicitud.estado }}
+                    {{ solicitud.estado || 'PENDIENTE' }}
                   </span>
                 </div>
               </td>
@@ -119,22 +119,22 @@
     <div class="detail-content" *ngIf="selectedSolicitud">
       <div class="detail-row">
         <span class="detail-label">Docente:</span>
-        <span class="detail-value">{{ selectedSolicitud.docente.nombre || 'N/A' }}</span>
+        <span class="detail-value">{{ selectedSolicitud.docente?.nombre || 'N/A' }}</span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Aula:</span>
-        <span class="detail-value">{{ selectedSolicitud.bien.aula.nombre || 'N/A' }}</span>
+        <span class="detail-value">{{ selectedSolicitud.bien?.aula?.nombre || 'N/A' }}</span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Bien:</span>
-        <span class="detail-value">{{ selectedSolicitud.bien.nombre_bien || 'N/A' }}</span>
+        <span class="detail-value">{{ selectedSolicitud.bien?.nombre_bien || 'N/A' }}</span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Estado:</span>
-        <span class="detail-value">{{ selectedSolicitud.estado }}</span>
+        <span class="detail-value">{{ selectedSolicitud.estado || 'PENDIENTE' }}</span>
       </div>
 
       <div class="detail-row full-width">

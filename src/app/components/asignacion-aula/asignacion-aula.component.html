@@ -33,13 +33,12 @@
             
             <div class="form-field">
               <label>Aula *</label>
- <select [(ngModel)]="nuevaAulaId" class="form-input" required>
-  <option [ngValue]="null">Seleccione un aula</option>
-  <option *ngFor="let aula of getAulasDisponibles()" [ngValue]="aula.idAula">
-    {{ aula.nombre }} - {{ aula.ubicacion }} (Capacidad: {{ aula.capacidad }})
-  </option>
-</select>
-
+              <select [(ngModel)]="nuevaAulaId" class="form-input" required>
+                <option [ngValue]="null">Seleccione un aula</option>
+                <option *ngFor="let aula of getAulasDisponibles()" [ngValue]="aula.idAula">
+                  {{ aula.nombre }} - {{ aula.ubicacion }} (Capacidad: {{ aula.capacidad }})
+                </option>
+              </select>
             </div>
 
             <div class="form-field">
@@ -77,7 +76,7 @@
            <tbody>
   <tr *ngFor="let asignacion of asignaciones">
     <td>{{ asignacion.usuario.nombre }}</td>
-    <td>{{ asignacion.aula.nombre }} - {{ asignacion.aula .ubicacion }}</td>
+    <td>{{ asignacion.aula.nombre }} - {{ asignacion.aula.ubicacion }}</td>
 <td>
   {{ asignacion.fechaSolicitud | date:'dd/MM/yyyy' }}
 </td>

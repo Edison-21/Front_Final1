@@ -37,12 +37,9 @@ export class AuthService {
     private router: Router,
     private apiService: ApiService
   ) {
-    {
-  window.addEventListener('beforeunload', () => {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('token');
-  });
-  } }
+    // No eliminar la sesión al refrescar la página
+    // La sesión se mantiene en localStorage
+  }
 
  login(email: string, contraseña: string): Observable<Usuario> {
   return this.apiService.post<any>('auth/login', {

@@ -175,6 +175,24 @@
                name="codigoSecap" placeholder="SEC-8899" required>
       </div>
 
+      <!-- Descripción -->
+      <div class="form-field full-width">
+        <label>Descripción</label>
+        <textarea [(ngModel)]="nuevoBien.descripcion"
+                  name="descripcion"
+                  placeholder="Descripción detallada del bien"
+                  rows="3"></textarea>
+      </div>
+
+      <!-- Especificaciones -->
+      <div class="form-field full-width">
+        <label>Especificaciones</label>
+        <textarea [(ngModel)]="nuevoBien.especificaciones"
+                  name="especificaciones"
+                  placeholder="Especificaciones técnicas del bien"
+                  rows="3"></textarea>
+      </div>
+
       <!-- Marca -->
       <div class="form-field">
         <label>Marca</label>
@@ -222,6 +240,14 @@
         </select>
       </div>
 
+      <!-- Detalle Estado -->
+      <div class="form-field">
+        <label>Detalle del Estado</label>
+        <input type="text" [(ngModel)]="nuevoBien.detalleEstado"
+               name="detalleEstado"
+               placeholder="Detalle del estado actual">
+      </div>
+
       <!-- Custodio -->
       <div class="form-field">
         <label>Custodio</label>
@@ -243,24 +269,44 @@
                name="provincia" placeholder="Pichincha" required>
       </div>
 
-      <!-- Categoría -->
-      <div class="form-field">
-        <label>Categoría</label>
-        <select [(ngModel)]="nuevoBien.categoria.idCategoria"
-                name="categoria" required>
-          <option [ngValue]="null">Seleccione</option>
-          <option *ngFor="let c of categorias" [ngValue]="c.idCategoria">
-            {{ c.nombre }}
-          </option>
-        </select>
-      </div>
-
       <!-- Observaciones -->
       <div class="form-field full-width">
         <label>Observaciones</label>
         <textarea [(ngModel)]="nuevoBien.observaciones"
                   name="observaciones"
-                  placeholder="Equipo asignado a sistemas"></textarea>
+                  placeholder="Observaciones generales"
+                  rows="3"></textarea>
+      </div>
+
+      <!-- Observaciones 2 -->
+      <div class="form-field full-width">
+        <label>Observaciones Adicionales</label>
+        <textarea [(ngModel)]="nuevoBien.observaciones2"
+                  name="observaciones2"
+                  placeholder="Observaciones adicionales"
+                  rows="3"></textarea>
+      </div>
+
+      <!-- Categoría -->
+      <div class="form-field">
+        <label>Categoría</label>
+        <select [(ngModel)]="nuevoBien.idCategoria" name="categoria" required>
+          <option [ngValue]="null">Seleccione una categoría</option>
+          <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">
+            {{ c.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Aula -->
+      <div class="form-field">
+        <label>Aula</label>
+        <select [(ngModel)]="nuevoBien.idAula" name="idAula">
+          <option [ngValue]="null">Seleccione un aula</option>
+          <option *ngFor="let aula of aulas" [ngValue]="aula.idAula">
+            {{ aula.nombre }} - {{ aula.ubicacion }}
+          </option>
+        </select>
       </div>
 
       <div class="modal-actions full-width">
@@ -394,20 +440,6 @@
         <input type="number"
                [(ngModel)]="selectedBien.valorConIva"
                name="valorConIvaEdit">
-      </div>
-
-      <div class="form-field">
-        <label>Categoría</label>
-       <select
-  [(ngModel)]="selectedBien.categoria.idCategoria"
-  name="categoriaEdit">
-  <option [ngValue]="null">Seleccione categoría</option>
-  <option *ngFor="let c of categorias" [ngValue]="c.idCategoria">
-    {{ c.nombre }}
-  </option>
-</select>
-
-
       </div>
 
       <div class="form-field">

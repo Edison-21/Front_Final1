@@ -12,7 +12,7 @@
         <path d="M14 2L16 10H24L18 14L20 22L14 18L8 22L10 14L4 10H12L14 2Z" stroke="currentColor" stroke-width="2" fill="none"/>
         <rect x="6" y="6" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
       </svg>
-      <h2 class="main-title">Solicitud de Mantenimiento y Cambio de Aulas</h2>
+      <h2 class="main-title">Solicitud de Cambio de Aulas</h2>
     </div>
 
     <div class="content-grid">
@@ -22,29 +22,40 @@
         
         <form (ngSubmit)="enviarSolicitud()">
           <div class="form-group">
-  <label for="aula">Aula</label>
-<select
-  id="aula"
-  [(ngModel)]="aulaSeleccionada"
-  name="aula"
-  required
-  (ngModelChange)="onAulaChange()"
->
-  <option *ngFor="let aula of aulasAsignadas" [ngValue]="aula.idAula">
-    {{ aula.nombre }}
-  </option>
-</select>
+            <label for="aula">Aula</label>
+            <select
+              id="aula"
+              [(ngModel)]="aulaSeleccionada"
+              name="aula"
+              required
+              (ngModelChange)="onAulaChange()"
+              class="form-select">
+              <option [ngValue]="null" disabled>Seleccione un aula</option>
+              <option *ngFor="let aula of aulasAsignadas" [ngValue]="aula.idAula">
+                {{ aula.nombre }}
+              </option>
+              <option *ngIf="aulasAsignadas.length === 0" disabled>No hay aulas asignadas</option>
+            </select>
+          </div>
 
-</div>
-<div class="form-group">
-  <label for="bien">Bien</label>
-  <select id="bien" [(ngModel)]="bienSeleccionado" name="bien" required>
-   <option *ngFor="let bien of getBienesAsignados()" [ngValue]="bien.idBien">
-  {{ bien.nombre_bien }} ({{ bien.aula.nombre }})
-</option>
-
-  </select>
-</div>
+          <div class="form-group">
+            <label for="bien">Bien</label>
+            <select 
+              id="bien" 
+              [(ngModel)]="bienSeleccionado" 
+              name="bien" 
+              required
+              class="form-select"
+              [disabled]="!aulaSeleccionada || getBienesAsignados().length === 0">
+              <option [ngValue]="null">Seleccione un bien</option>
+              <option *ngFor="let bien of getBienesAsignados()" [ngValue]="bien.idBien">
+                {{ bien.nombre_bien }}
+              </option>
+              <option *ngIf="aulaSeleccionada && getBienesAsignados().length === 0" disabled>
+                No hay bienes disponibles en esta aula
+              </option>
+            </select>
+          </div>
 
           <div class="form-group">
             <label for="tipo">Tipo de Solicitud</label>
@@ -98,14 +109,16 @@
               </tr>
             </thead>
             <tbody>
-             <tr *ngFor="let solicitud of misSolicitudes">
-     <td>{{ solicitud.bien?.aula?.nombre || 'N/A' }}</td>
-<td>{{ solicitud.descripcion.split(':')[0] }}</td>
-<td>{{ solicitud.descripcion.split(':').slice(1).join(':') }}</td>
-
-<td><span class="estado-badge pendiente">{{ solicitud.estado }}</span></td>
-
-            </tr>
+              <tr *ngFor="let solicitud of misSolicitudes">
+                <td>{{ solicitud.bien?.aula?.nombre || 'N/A' }}</td>
+                <td>{{ getTipoSolicitud(solicitud) }}</td>
+                <td>{{ getDetalleSolicitud(solicitud) }}</td>
+                <td>
+                  <span [class]="'estado-badge ' + (solicitud.estado ? solicitud.estado.toLowerCase() : 'pendiente')">
+                    {{ solicitud.estado || 'PENDIENTE' }}
+                  </span>
+                </td>
+              </tr>
               <tr *ngIf="misSolicitudes.length === 0">
                 <td colspan="4" class="no-data">No hay solicitudes registradas</td>
               </tr>

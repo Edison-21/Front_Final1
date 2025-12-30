@@ -27,6 +27,5 @@ export interface Bien {
   observaciones2: string;
   id_categoria: number;
   categoria?: Categoria;
-  aula: Aula;
-  
+  aula?: Aula;
 }

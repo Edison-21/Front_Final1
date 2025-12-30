@@ -41,7 +41,9 @@ editFecha: string = '';
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     if (user) {
-      this.currentUser = user.nombre;
+      this.currentUser = user.nombre || 'Administrador';
+    } else {
+      this.currentUser = 'Administrador';
     }
     this.loadAulas();
     this.loadUsuarios();
@@ -104,8 +106,8 @@ registrarAsignacion(): void {
 
 
  resetForm(): void {
-  this.nuevoUsuarioId = 0;
-  this.nuevaAulaId = 0;
+  this.nuevoUsuarioId = null;
+  this.nuevaAulaId = null;
   this.nuevaFecha = new Date().toISOString().split('T')[0];
 }
 
@@ -121,6 +123,7 @@ registrarAsignacion(): void {
 }
 
 
+
 getAulasDisponibles(): Aula[] {
   const aulasAsignadas = this.asignaciones
     .filter(a => a.estado)
@@ -131,8 +134,7 @@ getAulasDisponibles(): Aula[] {
   );
 }
 
-
- toggleEstadoAsignacion(asignacion: Asignacion): void {
+toggleEstadoAsignacion(asignacion: Asignacion): void {
   const body = {
     idUsuario: asignacion.usuario?.idUsuario,
     idAula: asignacion.aula?.idAula,

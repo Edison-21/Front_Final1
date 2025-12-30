@@ -67,7 +67,9 @@ post<T>(endpoint: string, body: any): Observable<T> {
 
   // Métodos para Roles
   getRoles(): Observable<Rol[]> {
-    return of(this.roles).pipe(delay(300));
+    return this.http.get<Rol[]>(`${this.baseUrl}/roles`, {
+      headers: this.getHeaders()
+    });
   }
 
   // Métodos para Usuarios
@@ -154,7 +156,7 @@ denegarSolicitud(id: number) {
   return this.http.put<Solicitud>(
     `${this.baseUrl}/solicitudes/${solicitud.idSolicitud}`,
     {
-      estado: solicitud.estado
+      estado: solicitud.estado || 'PENDIENTE'
     },
     { headers: this.getHeaders() }
   );

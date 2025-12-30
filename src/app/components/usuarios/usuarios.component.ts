@@ -30,8 +30,9 @@ export class UsuariosComponent implements OnInit {
   };
 
   passwordTemp = '';
-isEditMode: boolean = false;
-usuarioEditId: number | null = null;
+  showPassword = false;
+  isEditMode: boolean = false;
+  usuarioEditId: number | null = null;
 
   constructor(
     private apiService: ApiService,
@@ -63,8 +64,20 @@ usuarioEditId: number | null = null;
   loadUsuarios(): void {
     this.apiService.getUsuarios().subscribe({
       next: usuarios => {
+        console.log('Usuarios recibidos del backend:', usuarios);
+        // Log detallado de cada usuario
+        usuarios.forEach((usuario, index) => {
+          console.log(`Usuario ${index + 1}:`, {
+            nombre: usuario.nombre,
+            idRol: usuario.idRol,
+            rol: usuario.rol,
+            rolNombre: usuario.rol?.nombre
+          });
+        });
         this.usuarios = usuarios;
         this.filteredUsuarios = [...usuarios];
+        // Verificar que los roles estén cargados
+        console.log('Roles disponibles:', this.roles);
       },
       error: err => console.error('Error cargando usuarios', err)
     });
@@ -168,9 +181,25 @@ closeEditModal(): void {
     }
   }
 
-  getRolNombre(idRol: number): string {
+  getRolNombre(idRol: number, usuario?: Usuario): string {
+    // Si se pasa el usuario directamente, usar su rol primero
+    if (usuario && usuario.rol && usuario.rol.nombre) {
+      return usuario.rol.nombre;
+    }
+    
+    // Buscar el usuario específico por idRol
+    const usuarioEncontrado = usuario || this.usuarios.find(u => u.idRol === idRol);
+    if (usuarioEncontrado && usuarioEncontrado.rol && usuarioEncontrado.rol.nombre) {
+      return usuarioEncontrado.rol.nombre;
+    }
+    
+    // Si no, buscar en el array de roles cargado
     const rol = this.roles.find(r => r.idRol === idRol);
-    return rol ? rol.nombre : 'Sin rol';
+    if (rol && rol.nombre) {
+      return rol.nombre;
+    }
+    
+    return 'Sin rol';
   }
 
  formatDate(fecha?: string | Date): string {
@@ -217,8 +246,13 @@ openAddModal(): void {
     idRol: this.roles.length ? this.roles[0].idRol : 0
   };
 
-  this.passwordTemp = '';
+  this.  passwordTemp = '';
+  this.showPassword = false;
   this.showAddModal = true;
+}
+
+togglePasswordVisibility(): void {
+  this.showPassword = !this.showPassword;
 }
 
 

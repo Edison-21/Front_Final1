@@ -38,9 +38,8 @@ export class InventarioComponent implements OnInit {
   observaciones: '',
   observaciones2: '',
   origen: 'INVENTARIO',
-  categoria: {
-    idCategoria: null
-  },
+  idCategoria: null,
+  idAula: null
 };
     aulas: any[] = [];
 
@@ -124,45 +123,95 @@ export class InventarioComponent implements OnInit {
 
   // ➕ Modal Bien
   openAddModal() {
+    this.resetForm();
     this.showAddModal = true;
   }
 
   closeAddModal() {
     this.showAddModal = false;
+    this.resetForm();
   }
 
   // ✅ Validar bien
  validarBien(): boolean {
   const b = this.nuevoBien;
 
-  if (
-    !b.codigoBien ||
-    !b.nombreBien ||
-    !b.tipoBien ||
-    !b.claseBien ||
-    !b.cuentaTipoBien ||
-    !b.codigoInventario ||
-    !b.codigoSecap ||
-    !b.estado ||
-    !b.ubicacion ||
-    !b.provincia ||
-    !b.custodio ||
-    !b.valorCompraInicial ||
-    !b.valorConIva ||
-    !b.categoria.idCategoria
-  ) {
-    Swal.fire(
-      'Campos incompletos',
-      'Todos los campos obligatorios deben ser llenados',
-      'warning'
-    );
+  // Validar campos de texto
+  if (!b.codigoBien || b.codigoBien.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Código del bien" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.nombreBien || b.nombreBien.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Nombre del bien" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.tipoBien || b.tipoBien.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Tipo de bien" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.claseBien || b.claseBien.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Clase del bien" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.cuentaTipoBien || b.cuentaTipoBien.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Cuenta tipo bien" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.codigoInventario || b.codigoInventario.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Código inventario" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.codigoSecap || b.codigoSecap.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Código SECAP" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.estado || b.estado.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Estado" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.ubicacion || b.ubicacion.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Ubicación" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.provincia || b.provincia.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Provincia" es obligatorio', 'warning');
+    return false;
+  }
+  if (!b.custodio || b.custodio.trim() === '') {
+    Swal.fire('Campos incompletos', 'El campo "Custodio" es obligatorio', 'warning');
     return false;
   }
 
+  // Validar valores numéricos (pueden ser 0, pero no null/undefined/vacío)
+  if (b.valorCompraInicial === null || b.valorCompraInicial === undefined || b.valorCompraInicial === '') {
+    Swal.fire('Campos incompletos', 'El campo "Valor compra inicial" es obligatorio', 'warning');
+    return false;
+  }
+  if (isNaN(Number(b.valorCompraInicial))) {
+    Swal.fire('Campos incompletos', 'El campo "Valor compra inicial" debe ser un número válido', 'warning');
+    return false;
+  }
+
+  if (b.valorConIva === null || b.valorConIva === undefined || b.valorConIva === '') {
+    Swal.fire('Campos incompletos', 'El campo "Valor con IVA" es obligatorio', 'warning');
+    return false;
+  }
+  if (isNaN(Number(b.valorConIva))) {
+    Swal.fire('Campos incompletos', 'El campo "Valor con IVA" debe ser un número válido', 'warning');
+    return false;
+  }
+
+  // Validar categoría
+  if (!b.idCategoria || b.idCategoria === null || b.idCategoria === undefined || b.idCategoria === '') {
+    Swal.fire('Campos incompletos', 'Debe seleccionar una categoría', 'warning');
+    return false;
+  }
+
+  console.log('✅ Validación exitosa');
   return true;
 }
 
-loadAulas() {
+  loadAulas() {
   this.aulasService.getAll().subscribe(data => {
     this.aulas = data;
   });
@@ -172,16 +221,78 @@ loadAulas() {
   saveBien() {
     if (!this.validarBien()) return;
 
-    this.bienesService.create(this.nuevoBien).subscribe({
+    // Convertir valores numéricos explícitamente
+    const valorCompra = Number(this.nuevoBien.valorCompraInicial) || 0;
+    const valorIva = Number(this.nuevoBien.valorConIva) || 0;
+
+    // Mapear los campos al formato que espera el backend
+    const bienParaEnviar = {
+      codigo_bien: (this.nuevoBien.codigoBien || '').trim(),
+      codigo_inventario: (this.nuevoBien.codigoInventario || '').trim(),
+      codigo_secap: (this.nuevoBien.codigoSecap || '').trim(),
+      nombre_bien: (this.nuevoBien.nombreBien || '').trim(),
+      descripcion: (this.nuevoBien.descripcion || '').trim(),
+      tipo_bien: (this.nuevoBien.tipoBien || '').trim(),
+      clase_bien: (this.nuevoBien.claseBien || '').trim(),
+      cuenta_tipo_bien: (this.nuevoBien.cuentaTipoBien || '').trim(),
+      marca: (this.nuevoBien.marca || '').trim(),
+      modelo: (this.nuevoBien.modelo || '').trim(),
+      serie: (this.nuevoBien.serie || '').trim(),
+      especificaciones: (this.nuevoBien.especificaciones || '').trim(),
+      estado: (this.nuevoBien.estado || '').trim(),
+      detalle_estado: (this.nuevoBien.detalleEstado || '').trim(),
+      origen: this.nuevoBien.origen || 'INVENTARIO',
+      provincia: (this.nuevoBien.provincia || '').trim(),
+      ubicacion: (this.nuevoBien.ubicacion || '').trim(),
+      custodio: (this.nuevoBien.custodio || '').trim(),
+      valor_compra_inicial: valorCompra,
+      valor_con_iva: valorIva,
+      observaciones: (this.nuevoBien.observaciones || '').trim(),
+      observaciones2: (this.nuevoBien.observaciones2 || '').trim(),
+      id_categoria: this.nuevoBien.idCategoria || null,
+      id_aula: this.nuevoBien.idAula || null
+    };
+
+    this.bienesService.create(bienParaEnviar).subscribe({
       next: () => {
         Swal.fire('Éxito', 'Bien registrado correctamente', 'success');
         this.closeAddModal();
         this.loadBienes();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error al guardar bien:', err);
         Swal.fire('Error', 'No se pudo guardar el bien', 'error');
       }
     });
+  }
+
+  resetForm() {
+    this.nuevoBien = {
+      codigoBien: '',
+      nombreBien: '',
+      tipoBien: '',
+      claseBien: '',
+      cuentaTipoBien: '',
+      codigoInventario: '',
+      codigoSecap: '',
+      descripcion: '',
+      especificaciones: '',
+      marca: '',
+      modelo: '',
+      serie: '',
+      valorCompraInicial: null,
+      valorConIva: null,
+      estado: '',
+      detalleEstado: '',
+      custodio: '',
+      ubicacion: '',
+      provincia: '',
+      observaciones: '',
+      observaciones2: '',
+      origen: 'INVENTARIO',
+      idCategoria: null,
+      idAula: null
+    };
   }
 
   // 👁️ Detalles

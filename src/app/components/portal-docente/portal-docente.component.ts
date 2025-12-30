@@ -42,60 +42,181 @@ export class PortalDocenteComponent implements OnInit {
 
  ngOnInit(): void {
   const user = this.authService.getCurrentUser();
-  console.log('👤 USER:', user);
+  console.log('🔐 Usuario obtenido del auth service:', user);
 
   if (user) {
-    this.currentUser = user.nombre;
+    this.currentUser = user.nombre || 'Docente';
     this.currentUserId = user.idUsuario;
-
-    console.log('🟢 ID DOCENTE:', this.currentUserId);
-
-    this.loadAsignaciones(); // ⬅️ aquí empieza todo
+    
+    // Si el idUsuario es 0, intentar obtener el ID real del usuario por email
+    if (this.currentUserId === 0 && user.email) {
+      this.obtenerIdUsuarioPorEmail(user.email);
+    } else {
+      this.loadAsignaciones();
+    }
+  } else {
+    console.warn('⚠️ No hay usuario autenticado');
   }
+}
+
+obtenerIdUsuarioPorEmail(email: string): void {
+  this.apiService.getUsuarios().subscribe({
+    next: (usuarios) => {
+      const usuarioEncontrado = usuarios.find(u => u.email === email);
+      if (usuarioEncontrado && usuarioEncontrado.idUsuario) {
+        this.currentUserId = usuarioEncontrado.idUsuario;
+        console.log('✅ ID de usuario actualizado:', this.currentUserId);
+        // Actualizar el usuario en localStorage
+        const user = this.authService.getCurrentUser();
+        if (user) {
+          user.idUsuario = usuarioEncontrado.idUsuario;
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+      }
+      this.loadAsignaciones();
+    },
+    error: (err) => {
+      console.error('Error obteniendo usuarios:', err);
+      this.loadAsignaciones(); // Continuar de todas formas
+    }
+  });
 }
 
 
 
 
 loadAsignaciones(): void {
-  this.apiService.getAsignaciones().subscribe(asignaciones => {
-    this.asignaciones = asignaciones.filter(
-      a => a.usuario.idUsuario === this.currentUserId && a.estado
-    );
-
-    this.loadBienes(); // ⬅️ sigue el flujo
+  this.apiService.getAsignaciones().subscribe({
+    next: (asignaciones) => {
+      console.log('🔍 Todas las asignaciones recibidas:', asignaciones);
+      console.log('👤 ID Usuario actual:', this.currentUserId);
+      
+      // Filtrar asignaciones del usuario actual que estén activas
+      this.asignaciones = asignaciones.filter(a => {
+        const usuarioMatch = a.usuario?.idUsuario === this.currentUserId || a.id_usuario === this.currentUserId;
+        const estadoActivo = a.estado === true;
+        console.log(`Asignación ${a.idAsignacion}: usuario=${usuarioMatch}, estado=${estadoActivo}, aula=${a.aula?.nombre || a.id_aula}`);
+        return usuarioMatch && estadoActivo;
+      });
+      
+      console.log('✅ Asignaciones filtradas para este usuario:', this.asignaciones);
+      
+      // Cargar aulas desde las asignaciones
+      this.loadAulasFromAsignaciones();
+    },
+    error: (err) => {
+      console.error('❌ Error cargando asignaciones:', err);
+      this.loadBienes(); // Continuar aunque falle
+    }
   });
 }
 
+loadAulasFromAsignaciones(): void {
+  this.aulasAsignadas = [];
+  
+  if (this.asignaciones.length === 0) {
+    console.log('⚠️ No hay asignaciones para este usuario');
+    this.loadBienes();
+    return;
+  }
+  
+  // Obtener todas las aulas primero
+  this.apiService.getAulas().subscribe({
+    next: (todasLasAulas) => {
+      console.log('🏫 Todas las aulas disponibles:', todasLasAulas);
+      
+      // Para cada asignación, obtener el aula correspondiente
+      this.asignaciones.forEach(asignacion => {
+        let aula: Aula | undefined;
+        
+        // Intentar obtener el aula del objeto asignacion
+        if (asignacion.aula && asignacion.aula.idAula) {
+          aula = asignacion.aula;
+        }
+        // Si no, buscar por id_aula en todas las aulas
+        else if (asignacion.id_aula) {
+          aula = todasLasAulas.find(a => a.idAula === asignacion.id_aula);
+        }
+        
+        // Agregar el aula si existe y no está ya en la lista
+        if (aula) {
+          const yaExiste = this.aulasAsignadas.some(a => a.idAula === aula!.idAula);
+          if (!yaExiste) {
+            this.aulasAsignadas.push(aula);
+            console.log(`✅ Aula agregada: ${aula.nombre} (ID: ${aula.idAula})`);
+          }
+        } else {
+          console.log(`⚠️ No se encontró el aula para la asignación ${asignacion.idAsignacion}`);
+        }
+      });
+      
+      console.log('📚 Aulas asignadas finales:', this.aulasAsignadas);
+      
+      this.loadBienes();
+    },
+    error: (err) => {
+      console.error('❌ Error cargando aulas:', err);
+      // Intentar usar las aulas que vienen en las asignaciones
+      this.asignaciones.forEach(asignacion => {
+        if (asignacion.aula && asignacion.aula.idAula) {
+          const yaExiste = this.aulasAsignadas.some(a => a.idAula === asignacion.aula.idAula);
+          if (!yaExiste) {
+            this.aulasAsignadas.push(asignacion.aula);
+          }
+        }
+      });
+      this.loadBienes();
+    }
+  });
+}
 
 loadBienes(): void {
   this.apiService.getBienes().subscribe({
-    next: bienes => {
+    next: (bienes) => {
+      console.log('📦 Todos los bienes recibidos:', bienes);
+      
+      // Cargar todos los bienes sin filtrar por ahora
       this.bienes = bienes;
-      this.loadAulas();
-
-      // ✅ AQUÍ SÍ, porque el ID YA EXISTE
+      
+      // Si no hay aulas desde asignaciones, extraer aulas de los bienes
+      if (this.aulasAsignadas.length === 0) {
+        this.loadAulasFromBienes(bienes);
+      }
+      
+      console.log('📦 Bienes cargados:', this.bienes.length);
+      console.log('🏫 Aulas asignadas:', this.aulasAsignadas);
+      
+      // Seleccionar primera aula si no hay una seleccionada
+      if (this.aulasAsignadas.length > 0 && !this.aulaSeleccionada) {
+        this.aulaSeleccionada = this.aulasAsignadas[0].idAula;
+        this.onAulaChange();
+      }
+      
       this.loadMisSolicitudes();
     },
-    error: err => console.error(err)
+    error: (err) => {
+      console.error('❌ Error cargando bienes:', err);
+      this.bienes = [];
+      this.loadMisSolicitudes();
+    }
   });
 }
 
-
-
-
-loadAulas(): void {
-  this.aulasAsignadas = [];
-
-  this.bienes.forEach(b => {
-    if (b.aula && !this.aulasAsignadas.some(a => a.idAula === b.aula.idAula)) {
-      this.aulasAsignadas.push(b.aula);
+loadAulasFromBienes(bienes: Bien[]): void {
+  // Fallback: cargar aulas desde bienes si no hay asignaciones
+  bienes.forEach(b => {
+    if (b.aula) {
+      const aula = b.aula;
+      if (!this.aulasAsignadas.some(a => a.idAula === aula.idAula)) {
+        this.aulasAsignadas.push(aula);
+      }
     }
   });
-
-  // seleccionar primera aula por defecto
-  if (this.aulasAsignadas.length > 0) {
+  
+  // Seleccionar primera aula por defecto
+  if (this.aulasAsignadas.length > 0 && !this.aulaSeleccionada) {
     this.aulaSeleccionada = this.aulasAsignadas[0].idAula;
+    this.onAulaChange();
   }
 }
 
@@ -103,14 +224,19 @@ loadAulas(): void {
 
 
 loadMisSolicitudes(): void {
-  console.log('🟢 loadMisSolicitudes llamado con ID:', this.currentUserId);
+  if (!this.currentUserId || this.currentUserId === 0) {
+    console.warn('No se puede cargar solicitudes: ID de usuario no válido');
+    return;
+  }
 
   this.apiService.getSolicitudesDocente(this.currentUserId).subscribe({
-    next: (solicitudes: any[]) => {
-      console.log('🟢 RESPUESTA BACKEND:', solicitudes);
+    next: (solicitudes: Solicitud[]) => {
       this.misSolicitudes = solicitudes;
     },
-    error: err => console.error('🔴 ERROR API:', err)
+    error: err => {
+      console.error('Error cargando solicitudes:', err);
+      this.misSolicitudes = [];
+    }
   });
 }
 
@@ -119,31 +245,73 @@ loadMisSolicitudes(): void {
 
 
 onAulaChange(): void {
-  // limpiar bien seleccionado cuando cambia el aula
+  // Limpiar bien seleccionado cuando cambia el aula
   this.bienSeleccionado = null;
+  
+  // Actualizar bienes asignados para el aula seleccionada
+  const bienesFiltrados = this.getBienesAsignados();
+  if (bienesFiltrados.length > 0 && !this.bienSeleccionado) {
+    // Opcional: seleccionar el primer bien automáticamente
+    // this.bienSeleccionado = bienesFiltrados[0].idBien;
+  }
 }
 
 getBienesAsignados(): Bien[] {
-  console.log(this.bienes);
-  return this.bienes.filter(b => b.aula?.idAula === this.aulaSeleccionada);
+  if (!this.aulaSeleccionada) {
+    console.log('⚠️ No hay aula seleccionada');
+    return [];
+  }
+  
+  const bienesFiltrados = this.bienes.filter(b => {
+    // Verificar si el bien tiene aula y coincide con la seleccionada
+    if (!b.aula || !b.aula.idAula) {
+      console.log(`⚠️ Bien ${b.idBien} (${b.nombre_bien}) no tiene aula asignada`);
+      return false;
+    }
+    
+    const coincide = b.aula.idAula === this.aulaSeleccionada;
+    return coincide;
+  });
+  
+  console.log(`✅ Bienes para aula ${this.aulaSeleccionada}:`, bienesFiltrados.length);
+  console.log('📋 Bienes filtrados:', bienesFiltrados.map(b => `${b.nombre_bien} (Aula: ${b.aula?.nombre || 'N/A'})`));
+  
+  return bienesFiltrados;
+}
+
+getTipoSolicitud(solicitud: Solicitud): string {
+  if (!solicitud.descripcion) {
+    return 'N/A';
+  }
+  const partes = solicitud.descripcion.split(':');
+  return partes[0] || solicitud.descripcion;
+}
+
+getDetalleSolicitud(solicitud: Solicitud): string {
+  if (!solicitud.descripcion) {
+    return '-';
+  }
+  const partes = solicitud.descripcion.split(':');
+  if (partes.length > 1) {
+    return partes.slice(1).join(':').trim() || '-';
+  }
+  return '-';
 }
 
 
 
 enviarSolicitud(): void {
   // Validar que todos los campos estén completos
-  if (!this.aulaSeleccionada || !this.tipoSolicitud || !this.detalleProblema) {
+  if (!this.aulaSeleccionada || !this.bienSeleccionado || !this.tipoSolicitud || !this.detalleProblema) {
     alert('Por favor complete todos los campos');
     return;
   }
 
-  // Buscar un bien relacionado con el aula seleccionada
-  const bienRelacionado = this.getBienesAsignados().find(
-    b => b.aula?.idAula === this.aulaSeleccionada
-  );
+  // Buscar el bien seleccionado
+  const bienRelacionado = this.bienes.find(b => b.idBien === this.bienSeleccionado);
 
   if (!bienRelacionado) {
-    alert('No se encontró un bien para el aula seleccionada');
+    alert('No se encontró el bien seleccionado');
     return;
   }
 
@@ -161,19 +329,22 @@ enviarSolicitud(): void {
       (res as any).bien = bienRelacionado;
 
       alert('Solicitud enviada correctamente');
-          this.loadMisSolicitudes();
+      this.loadMisSolicitudes();
 
       // Limpiar formulario
       this.detalleProblema = '';
       this.tipoSolicitud = '';
-      this.aulaSeleccionada = this.aulasAsignadas.length > 0 ? this.aulasAsignadas[0].idAula : null;
+      this.bienSeleccionado = null;
+      if (this.aulasAsignadas.length > 0) {
+        this.aulaSeleccionada = this.aulasAsignadas[0].idAula;
+        this.onAulaChange();
+      }
     },
     error: (err) => {
       console.error('Error al enviar la solicitud:', err);
       alert('Error al enviar la solicitud');
     }
   });
-  
-  
-}}
+}
 
+}
