@@ -21,6 +21,7 @@ export class SidebarComponent implements OnInit {
   userRole = '';
   currentRoute: string = '';
   showConfirmLogout: boolean = false;
+  isCollapsed: boolean = false;
   menuItems: MenuItem[] = [
     // Menú para Admin
     { route: '/usuarios', label: 'Gestión de Usuarios', roles: [1] },
@@ -82,6 +83,16 @@ export class SidebarComponent implements OnInit {
 
   cancelarCerrarSesion(): void {
     this.showConfirmLogout = false;
+  }
+
+  toggleSidebar(): void {
+    this.isCollapsed = !this.isCollapsed;
+    // Actualizar clase en body para que otros componentes se adapten
+    if (this.isCollapsed) {
+      document.body.classList.add('sidebar-collapsed');
+    } else {
+      document.body.classList.remove('sidebar-collapsed');
+    }
   }
 }
 

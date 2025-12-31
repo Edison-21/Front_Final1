@@ -15,6 +15,7 @@ export class LoginComponent {
   showPassword: boolean = false;
   errorMessage: string = '';
   isLoading: boolean = false;
+  particles = Array(10).fill(0).map((_, i) => i + 1);
 
   roleOptions = [
     { id: 1, name: 'Admin' },
